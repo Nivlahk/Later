@@ -1,0 +1,2013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Bridge — from a sound you have to one you don't</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..600&family=Spectral:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14110c;--ink2:#1b1711;--cell:#0e0b07;
+    --paper:#ece3d0;--dim:rgba(236,227,208,.56);--faint:rgba(236,227,208,.30);
+    --line:rgba(236,227,208,.13);--verm:#d24e2c;--gold:#cba353;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--ink);color:var(--paper);
+    font-family:'Spectral',Georgia,serif;font-size:17px;line-height:1.55;
+    background-image:radial-gradient(circle at 14% -10%,rgba(210,78,44,.08),transparent 46%),
+                     radial-gradient(circle at 90% -4%,rgba(203,163,83,.06),transparent 44%);}
+  .wrap{max-width:940px;margin:0 auto;padding:0 24px 100px;}
+
+  /* ---------- shared type ---------- */
+  .kicker{font-family:'Fraunces';font-weight:500;letter-spacing:.4em;text-transform:uppercase;
+    font-size:12px;color:var(--verm);margin:0 0 16px;}
+  h1{font-family:'Fraunces';font-weight:300;font-size:clamp(42px,8.5vw,84px);line-height:.92;
+    margin:0;letter-spacing:-.025em;}
+  h1 em{font-style:italic;color:var(--gold);}
+  h2{font-family:'Fraunces';font-weight:400;font-size:26px;margin:48px 0 4px;letter-spacing:-.015em;}
+  .lede{max-width:620px;color:var(--dim);font-size:19px;margin:22px 0 0;}
+  .lede b{color:var(--paper);font-weight:500;}
+  .sub{color:var(--dim);font-size:16px;margin:0 0 20px;max-width:640px;}
+
+  button{font-family:'Fraunces';cursor:pointer;}
+  .btn{font-size:15px;color:var(--gold);background:none;border:1px solid var(--line);
+    border-radius:20px;padding:10px 20px;transition:.15s;}
+  .btn:hover{border-color:var(--gold);}
+  .btn.primary{color:var(--ink);background:var(--gold);border-color:var(--gold);font-weight:500;}
+  .btn.primary:hover{background:#dcb977;border-color:#dcb977;}
+  .btn:focus-visible{outline:2px solid var(--gold);outline-offset:3px;}
+
+  /* ---------- screen 1: pickers ---------- */
+  header{padding:60px 0 0;}
+  .picker{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end;
+    margin:36px 0 0;border-top:1px solid var(--line);padding-top:28px;}
+  .field{flex:1;min-width:220px;}
+  .field label{display:block;font-family:'Fraunces';font-size:11px;letter-spacing:.26em;
+    text-transform:uppercase;color:var(--verm);margin:0 0 8px;}
+  select{width:100%;font-family:'Spectral',Georgia,serif;font-size:17px;color:var(--paper);
+    background:var(--ink2);border:1px solid var(--line);border-radius:10px;padding:11px 13px;
+    cursor:pointer;appearance:none;
+    background-image:linear-gradient(45deg,transparent 50%,var(--gold) 50%),
+                     linear-gradient(135deg,var(--gold) 50%,transparent 50%);
+    background-position:calc(100% - 19px) 50%,calc(100% - 13px) 50%;
+    background-size:6px 6px,6px 6px;background-repeat:no-repeat;}
+  select:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+  option{background:var(--ink2);color:var(--paper);}
+
+  .langchips{display:flex;flex-wrap:wrap;gap:8px;}
+  .lang{font-family:'Fraunces';font-size:14px;color:var(--dim);background:none;
+    border:1px solid var(--line);border-radius:20px;padding:8px 15px;transition:.14s;}
+  .lang:hover{color:var(--paper);border-color:var(--faint);}
+  .lang[aria-pressed="true"]{color:var(--ink);background:var(--gold);border-color:var(--gold);
+    font-weight:500;}
+  .lang:focus-visible{outline:2px solid var(--gold);outline-offset:3px;}
+  .hint{color:var(--faint);font-size:14px;margin:10px 0 0;}
+  .src{color:var(--faint);font-size:13px;font-style:italic;margin-top:3px;}
+
+  .modes{display:flex;gap:8px;margin:30px 0 0;}
+  .mode{font-family:'Fraunces';font-size:14px;color:var(--dim);background:none;
+    border:1px solid var(--line);border-radius:20px;padding:9px 18px;transition:.14s;}
+  .mode:hover{color:var(--paper);}
+  .mode[aria-pressed="true"]{color:var(--ink);background:var(--paper);border-color:var(--paper);
+    font-weight:500;}
+  .mode[disabled]{opacity:.4;cursor:default;}
+  .mode:focus-visible{outline:2px solid var(--gold);outline-offset:3px;}
+
+  .wordrow{display:grid;grid-template-columns:38px 60px 1fr;gap:16px;align-items:baseline;
+    padding:9px 6px;border-top:1px solid rgba(236,227,208,.06);}
+  .wordrow .r{font-family:'Fraunces';font-size:12px;color:var(--faint);text-align:right;}
+  .wordrow .h{font-size:24px;line-height:1.1;}
+  .wordrow .p{font-family:'Fraunces';font-size:16px;color:var(--gold);}
+  .wordrow .ipa2{font-family:'Fraunces';font-size:14px;color:var(--faint);}
+  .wordrow .gl{color:var(--dim);font-size:15px;}
+  @media(max-width:560px){.wordrow{grid-template-columns:32px 1fr;}
+    .wordrow .h{grid-column:2;}}
+
+  .lesson{display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;
+    width:100%;text-align:left;background:var(--ink2);color:inherit;font:inherit;
+    border:1px solid var(--verm);border-left-width:3px;border-radius:12px;
+    padding:16px 18px;margin:14px 0;transition:.14s;}
+  .lesson:hover{background:#241c14;}
+  .lesson:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+  .lesson .lg{font-family:'Fraunces';font-size:30px;color:var(--gold);line-height:1;
+    margin-right:4px;vertical-align:-4px;}
+  .lesson .lt{font-family:'Fraunces';font-size:12px;letter-spacing:.24em;
+    text-transform:uppercase;color:var(--verm);margin-bottom:7px;}
+  .lesson .ld{color:var(--dim);font-size:15px;margin-top:6px;}
+  .lesson .ld b{font-family:'Fraunces';color:var(--paper);font-weight:400;font-size:17px;}
+
+  .tally{display:flex;flex-wrap:wrap;gap:34px;margin:32px 0 0;
+    border-top:1px solid var(--line);padding-top:24px;}
+  .tally .n{font-family:'Fraunces';font-weight:300;font-size:40px;line-height:1;color:var(--gold);}
+  .tally .n.warn{color:var(--verm);}
+  .tally .k{font-family:'Fraunces';font-size:11px;letter-spacing:.24em;text-transform:uppercase;
+    color:var(--faint);margin-top:7px;}
+
+  /* ---------- sound list ---------- */
+  .pick{display:grid;grid-template-columns:80px 1fr auto;gap:20px;align-items:center;
+    width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);
+    padding:17px 6px;color:inherit;font-family:inherit;font-size:inherit;transition:.13s;}
+  .pick:last-of-type{border-bottom:1px solid var(--line);}
+  .pick:hover{background:var(--ink2);}
+  .pick:focus-visible{outline:2px solid var(--gold);outline-offset:-2px;}
+  @media(max-width:560px){.pick{grid-template-columns:58px 1fr;gap:14px;}
+    .pick .chev{display:none;}}
+  .pick .g{font-family:'Fraunces';font-weight:300;font-size:36px;line-height:1;
+    color:var(--gold);text-align:center;}
+  .pick .nm{font-family:'Fraunces';font-size:18px;}
+  .pick .nm small{display:block;font-family:'Spectral';font-size:15px;color:var(--dim);margin-top:1px;}
+  .pick .from{color:var(--dim);font-size:15px;margin-top:5px;}
+  .pick .from b{font-family:'Fraunces';font-size:17px;color:var(--paper);font-weight:400;
+    border-bottom:2px solid var(--verm);padding:0 2px;}
+  .pick .chev{color:var(--faint);font-family:'Fraunces';font-size:20px;}
+
+  .tag{display:inline-block;font-family:'Fraunces';font-size:11px;font-weight:500;
+    letter-spacing:.14em;text-transform:uppercase;padding:3px 9px;border-radius:20px;
+    border:1px solid currentColor;margin-left:8px;vertical-align:3px;white-space:nowrap;}
+  .tag.k-place{color:#e0a04a;}    .tag.k-articulator{color:#d24e2c;}
+  .tag.k-manner{color:#8fb98a;}   .tag.k-voice{color:#7fa8c4;}
+  .tag.k-phonation{color:#b98ac4;} .tag.k-lateral{color:#8fb98a;}
+  .tag.k-labialised,.tag.k-round{color:#c9a0b8;}
+  .tag.k-height,.tag.k-backness{color:#cba353;}
+  .tag.k-long,.tag.k-nasalised,.tag.k-rhotic{color:#9aa79c;}
+  .tag.k-none{color:var(--faint);}
+  .tag.multi{border-style:dashed;}
+
+  /* ---------- screen 2: the walk ---------- */
+  .crumb{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    padding:26px 0 0;color:var(--faint);font-size:14px;}
+  .crumb .btn{padding:7px 15px;font-size:13px;}
+  .stagebar{display:flex;gap:0;margin:26px 0 0;border-top:1px solid var(--line);}
+  .stagebar div{flex:1;padding:14px 0 0;border-top:2px solid transparent;margin-top:-1px;
+    font-family:'Fraunces';font-size:12px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--faint);transition:.2s;}
+  .stagebar div.on{border-top-color:var(--verm);color:var(--paper);}
+  .stagebar div.done{border-top-color:var(--line);color:var(--dim);}
+
+  .bighead{margin:30px 0 0;}
+  .bighead .g{font-family:'Fraunces';font-weight:300;font-size:clamp(64px,14vw,120px);
+    line-height:.9;color:var(--gold);}
+  .bighead .role{font-family:'Fraunces';font-size:12px;letter-spacing:.3em;
+    text-transform:uppercase;color:var(--verm);margin-bottom:10px;}
+  .bighead .nm{color:var(--dim);font-size:19px;margin-top:12px;max-width:620px;}
+  .bighead .nm b{color:var(--paper);font-weight:500;}
+
+  .panes{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:28px 0 0;}
+  @media(max-width:660px){.panes{grid-template-columns:1fr;}}
+  .pane .ph{font-family:'Fraunces';font-size:11px;letter-spacing:.26em;text-transform:uppercase;
+    color:var(--verm);margin:0 0 10px;}
+  .frame{position:relative;background:var(--cell);border:1px solid var(--line);
+    border-radius:14px;overflow:hidden;aspect-ratio:1/1;}
+  .frame img{width:100%;height:100%;object-fit:cover;display:block;}
+  .missing{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:9px;padding:22px;text-align:center;}
+  .missing .icon{font-family:'Fraunces';font-size:34px;color:var(--faint);}
+  .missing .what{font-family:'Fraunces';font-size:17px;color:var(--dim);}
+  .missing .path{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;
+    color:var(--faint);word-break:break-all;line-height:1.5;}
+  .pane .cap{margin-top:11px;font-family:'Fraunces';font-size:16px;color:var(--paper);}
+  .pane .cap small{display:block;font-family:'Spectral';font-size:14px;color:var(--dim);margin-top:2px;}
+
+  /* self-checks */
+  .check{border-top:1px solid var(--line);padding:20px 0;display:grid;
+    grid-template-columns:1fr auto;gap:20px;align-items:start;}
+  .check:last-of-type{border-bottom:1px solid var(--line);}
+  .check .t{font-family:'Fraunces';font-size:19px;margin-bottom:6px;}
+  .check .t .tag{vertical-align:2px;}
+  .check .how{color:var(--dim);margin:0 0 8px;}
+  .check .pass{color:var(--paper);margin:0;padding-left:16px;border-left:2px solid var(--gold);}
+  .check.unreliable .pass{border-left-color:var(--faint);color:var(--dim);}
+  .tick{font-family:'Fraunces';font-size:14px;white-space:nowrap;color:var(--dim);
+    background:none;border:1px solid var(--line);border-radius:20px;padding:9px 16px;
+    transition:.14s;align-self:center;}
+  .tick:hover{color:var(--paper);border-color:var(--faint);}
+  .tick[aria-pressed="true"]{color:var(--ink);background:var(--gold);border-color:var(--gold);
+    font-weight:500;}
+  .tick:focus-visible{outline:2px solid var(--gold);outline-offset:3px;}
+  .tick[disabled]{opacity:.45;cursor:default;}
+  .gate{color:var(--faint);font-size:15px;margin:20px 0 0;font-style:italic;}
+  .stub{border:1px dashed var(--line);border-radius:14px;padding:26px;margin:26px 0 0;}
+  .stub h3{font-family:'Fraunces';font-weight:400;font-size:20px;margin:0 0 10px;}
+  .stub p{margin:0 0 12px;}
+  .stub .path{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;
+    color:var(--faint);line-height:1.9;}
+  .choice{display:flex;gap:12px;flex-wrap:wrap;margin:18px 0 0;}
+  .choice button{font-family:'Fraunces';font-size:20px;color:var(--faint);background:none;
+    border:1px solid var(--line);border-radius:12px;padding:16px 28px;}
+
+  /* a panel that is identical on both sides of the bridge */
+  .same{display:flex;gap:16px;align-items:center;margin:18px 0 0;padding:14px 16px;
+    border:1px solid var(--line);border-radius:12px;background:rgba(236,227,208,.02);}
+  .same .thumb{width:64px;height:64px;flex:none;border-radius:8px;overflow:hidden;
+    background:var(--cell);border:1px solid var(--line);position:relative;}
+  .same .thumb img{width:100%;height:100%;object-fit:cover;opacity:.55;}
+  .same .thumb .missing{padding:0;gap:0;}
+  .same .thumb .missing .icon{font-size:18px;}
+  .same .thumb .missing .what,.same .thumb .missing .path{display:none;}
+  .same .txt{color:var(--dim);font-size:15px;}
+  .same .txt b{font-family:'Fraunces';color:var(--paper);font-weight:400;font-size:16px;}
+  .same .lbl{font-family:'Fraunces';font-size:10px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--faint);display:block;margin-bottom:3px;}
+  .invisible{border-left:2px solid var(--gold);padding:6px 0 6px 18px;margin:22px 0 0;
+    max-width:660px;color:var(--dim);}
+  .invisible b{color:var(--paper);font-weight:500;}
+
+  .change{border-left:2px solid var(--verm);padding:6px 0 6px 20px;margin:30px 0 0;max-width:660px;}
+  .change .h{font-family:'Fraunces';font-size:19px;margin-bottom:8px;}
+  .change ol{margin:0;padding-left:20px;color:var(--dim);}
+  .change ol li{margin:5px 0;}
+  .change ol li::marker{color:var(--verm);font-family:'Fraunces';font-size:13px;}
+  .change .g2{color:var(--faint);font-size:15px;font-style:italic;margin-top:9px;}
+
+  .nav{display:flex;flex-wrap:wrap;gap:12px;margin:38px 0 0;
+    border-top:1px solid var(--line);padding-top:26px;}
+
+  /* ---------- misc ---------- */
+  .chips{display:flex;flex-wrap:wrap;gap:7px;}
+  .chip{font-family:'Fraunces';font-size:17px;color:var(--dim);
+    border:1px solid var(--line);border-radius:9px;padding:5px 11px;}
+  .chip.own{color:var(--gold);}
+  details{border-top:1px solid var(--line);padding:18px 0 0;margin-top:32px;}
+  summary{font-family:'Fraunces';font-size:16px;color:var(--dim);cursor:pointer;
+    list-style:none;margin-bottom:14px;}
+  summary::-webkit-details-marker{display:none;}
+  summary:before{content:"+ ";color:var(--verm);}
+  details[open] summary:before{content:"\u2212 ";}
+  summary:focus-visible{outline:2px solid var(--gold);outline-offset:3px;}
+  .merge{border-left:2px solid var(--verm);padding:4px 0 4px 18px;margin:0 0 20px;}
+  .merge .h{font-family:'Fraunces';font-size:17px;margin-bottom:6px;}
+  .merge .h .a{color:var(--gold);}
+  .merge ul{margin:0;padding-left:18px;color:var(--dim);font-size:15px;}
+  .merge ul li b{font-family:'Fraunces';color:var(--paper);font-weight:400;font-size:17px;
+    margin-right:5px;}
+  footer{margin-top:56px;padding-top:22px;border-top:1px solid var(--line);
+    color:var(--faint);font-size:13px;max-width:700px;}
+  footer p{margin:0 0 9px;}
+  footer code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--dim);}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+/* ==========================================================================
+   bridge-engine.js — feature graph + shortest-path solver, no dependencies.
+
+   Every segment is a bundle of features. Two bundles are adjacent if exactly
+   one feature differs by exactly one step, and each step has a cost. Finding
+   the route from a sound a learner owns to one they don't is then a shortest
+   path over that graph.
+
+   Multi-source Dijkstra: seed with EVERY L1 sound at cost 0 and relax outward.
+   The anchor falls out of the search rather than being picked in advance.
+
+   Intermediate nodes are NOT required to be phonemes of any language. Sliding
+   from /S/ toward /s`/ passes through positions no language uses
+   contrastively, and that is exactly where the tongue has to go.
+
+   Two modelling decisions worth knowing:
+     - RETROFLEX IS NOT A PLACE. It is post-alveolar + apical articulator.
+       That makes /S/ -> /s`/ one step (blade -> tip) while /S/ -> /s\/ is a
+       place move. Different things to ask of a mouth.
+     - LATERAL and LABIALISED are features, not manners, so l~4 and j~H stay
+       one step apart.
+   ========================================================================== */
+
+(function (root) {
+'use strict';
+
+/* ---------- ordinal scales: adjacency is +/-1 along the list ------------- */
+
+const PLACES = ['bilabial','labiodental','dental','alveolar','postalveolar',
+                'alveolopalatal','palatal','velar','uvular','pharyngeal','glottal'];
+const HEIGHTS = ['close','near-close','close-mid','mid','open-mid','near-open','open'];
+const BACKNESS = ['front','central','back'];
+
+const PLACE_IX  = Object.fromEntries(PLACES.map((p,i)=>[p,i]));
+const HEIGHT_IX = Object.fromEntries(HEIGHTS.map((h,i)=>[h,i]));
+const BACK_IX   = Object.fromEntries(BACKNESS.map((b,i)=>[b,i]));
+
+/* ---------- non-ordinal features: explicit adjacency -------------------- */
+
+const MANNER_EDGES = [
+  ['plosive','affricate'],      // hold the release
+  ['affricate','fricative'],    // drop the closure
+  ['fricative','approximant'],  // open the channel until it stops hissing
+  ['plosive','nasal'],          // drop the velum
+  ['plosive','tap'],            // make the closure ballistic
+  ['tap','trill'],              // let it vibrate
+  ['tap','approximant'],        // stop touching
+  ['plosive','fricative'],      // one step on [continuant]; priced separately
+];
+const ARTICULATOR_EDGES = [['apical','laminal'], ['laminal','dorsal']];
+const PHONATION_EDGES = [
+  ['plain','aspirated'], ['aspirated','breathy'], ['plain','breathy'],
+  ['plain','tense'], ['plain','ejective'], ['plain','implosive'],
+];
+
+function adj(edges){
+  const d = {};
+  for (const [a,b] of edges){ (d[a] = d[a]||[]).push(b); (d[b] = d[b]||[]).push(a); }
+  return d;
+}
+const MANNER_ADJ = adj(MANNER_EDGES);
+const ARTICULATOR_ADJ = adj(ARTICULATOR_EDGES);
+const PHONATION_ADJ = adj(PHONATION_EDGES);
+
+/* ---------- step costs: the whole editorial model ----------------------- */
+
+const COST = {
+  place: 1.00, articulator: 1.00, manner: 1.20, voice: 0.80,
+  phonation: 1.00, lateral: 1.20, labialised: 0.60,
+  height: 0.70, backness: 0.90, round: 0.60, long: 0.40,
+  nasalised: 0.90, rhotic: 1.10,
+};
+// skipping the affricate is a bigger jump than either half of it
+const MANNER_STEP_COST = { 'fricative|plosive': 1.80 };  // key is sorted
+function mannerCost(a,b){
+  return MANNER_STEP_COST[[a,b].sort().join('|')] ?? COST.manner;
+}
+// a sound the learner produces but has never had to produce on purpose
+const ALLOPHONE_PENALTY = 0.45;
+
+/* ---------- segments ---------------------------------------------------- */
+
+const PLACE_DEFAULT_ARTIC = {
+  bilabial:'labial', labiodental:'labial', dental:'laminal', alveolar:'apical',
+  postalveolar:'laminal', alveolopalatal:'laminal', palatal:'dorsal',
+  velar:'dorsal', uvular:'dorsal', pharyngeal:'radical', glottal:'laryngeal',
+};
+const PLACE_ALLOWED_ARTIC = {
+  bilabial:['labial'], labiodental:['labial'],
+  dental:['apical','laminal'], alveolar:['apical','laminal'],
+  postalveolar:['apical','laminal'],           // apical == retroflex
+  alveolopalatal:['laminal'], palatal:['dorsal'], velar:['dorsal'],
+  uvular:['dorsal'], pharyngeal:['radical'], glottal:['laryngeal'],
+};
+
+function seg(o){
+  return Object.assign({
+    kind:'C', place:'', articulator:'', manner:'', voiced:false,
+    phonation:'plain', lateral:false, labialised:false,
+    height:'', backness:'', round:false, long:false, nasalised:false, rhotic:false,
+  }, o);
+}
+function key(s){
+  return s.kind === 'C'
+    ? `C|${s.place}|${s.articulator}|${s.manner}|${+s.voiced}|${s.phonation}|${+s.lateral}|${+s.labialised}`
+    : `V|${s.height}|${s.backness}|${+s.round}|${+s.long}|${+s.nasalised}|${+s.rhotic}`;
+}
+function with_(s, patch){ return Object.assign({}, s, patch); }
+
+function valid(s){
+  if (s.kind === 'V') return true;
+  const allowed = PLACE_ALLOWED_ARTIC[s.place];
+  if (!allowed || !allowed.includes(s.articulator)) return false;
+  if (s.lateral && !['approximant','fricative','tap'].includes(s.manner)) return false;
+  if (s.lateral && !['dental','alveolar','postalveolar','alveolopalatal','palatal','velar'].includes(s.place)) return false;
+  if (s.manner === 'nasal' && (!s.voiced || s.phonation !== 'plain' || s.place === 'glottal')) return false;
+  if (s.manner === 'tap' || s.manner === 'trill'){
+    if (!s.voiced || s.phonation !== 'plain') return false;
+    if (!['bilabial','dental','alveolar','postalveolar','uvular'].includes(s.place)) return false;
+  }
+  if (['aspirated','breathy','tense','ejective'].includes(s.phonation) &&
+      !['plosive','affricate','fricative'].includes(s.manner)) return false;
+  if (s.phonation === 'implosive' && s.manner !== 'plosive') return false;
+  if ((s.phonation === 'aspirated' || s.phonation === 'ejective') && s.voiced) return false;
+  if (s.phonation === 'breathy' && !s.voiced) return false;
+  if (s.manner === 'trill' && s.place === 'postalveolar') return false;
+  if (s.place === 'glottal' && !['plosive','fricative','approximant'].includes(s.manner)) return false;
+  if (s.place === 'pharyngeal' && !['fricative','approximant'].includes(s.manner)) return false;
+  if (s.place === 'labiodental' && ['plosive','affricate'].includes(s.manner)) return false;
+  if (s.manner === 'affricate' && ['glottal','pharyngeal','uvular'].includes(s.place)) return false;
+  if (s.labialised && ['bilabial','labiodental'].includes(s.place)) return false;
+  return true;
+}
+
+/** every single-feature neighbour: [segment, cost, [dim, from, to]] */
+function neighbours(s){
+  const out = [];
+  const emit = (n, c, dim, f, t) => { if (valid(n)) out.push([n, c, [dim, f, t]]); };
+
+  if (s.kind === 'C'){
+    const i = PLACE_IX[s.place];
+    for (const j of [i-1, i+1]){
+      if (j < 0 || j >= PLACES.length) continue;
+      const p = PLACES[j];
+      const art = PLACE_ALLOWED_ARTIC[p].includes(s.articulator)
+        ? s.articulator : PLACE_DEFAULT_ARTIC[p];
+      emit(with_(s, {place:p, articulator:art}), COST.place, 'place', s.place, p);
+    }
+    for (const a of (ARTICULATOR_ADJ[s.articulator]||[]))
+      emit(with_(s,{articulator:a}), COST.articulator, 'articulator', s.articulator, a);
+    for (const m of (MANNER_ADJ[s.manner]||[]))
+      emit(with_(s,{manner:m}), mannerCost(s.manner,m), 'manner', s.manner, m);
+    emit(with_(s,{voiced:!s.voiced}), COST.voice, 'voice', s.voiced, !s.voiced);
+    for (const p of (PHONATION_ADJ[s.phonation]||[]))
+      emit(with_(s,{phonation:p}), COST.phonation, 'phonation', s.phonation, p);
+    emit(with_(s,{lateral:!s.lateral}), COST.lateral, 'lateral', s.lateral, !s.lateral);
+    emit(with_(s,{labialised:!s.labialised}), COST.labialised, 'labialised', s.labialised, !s.labialised);
+  } else {
+    let i = HEIGHT_IX[s.height];
+    for (const j of [i-1,i+1]) if (j>=0 && j<HEIGHTS.length)
+      emit(with_(s,{height:HEIGHTS[j]}), COST.height, 'height', s.height, HEIGHTS[j]);
+    i = BACK_IX[s.backness];
+    for (const j of [i-1,i+1]) if (j>=0 && j<BACKNESS.length)
+      emit(with_(s,{backness:BACKNESS[j]}), COST.backness, 'backness', s.backness, BACKNESS[j]);
+    for (const dim of ['round','long','nasalised','rhotic'])
+      emit(with_(s,{[dim]:!s[dim]}), COST[dim], dim, s[dim], !s[dim]);
+  }
+  return out;
+}
+
+/* ======================================================================== */
+/*  IPA table                                                               */
+/* ======================================================================== */
+
+const SYMBOLS = {}, NAMES = {}, BY_KEY = {};
+
+function autoC(s){
+  const b = [];
+  if (s.phonation !== 'plain') b.push(s.phonation);
+  b.push(s.voiced ? 'voiced' : 'voiceless');
+  if (['dental','alveolar','postalveolar'].includes(s.place))
+    b.push(s.articulator === 'apical' ? 'apical' : 'laminal');
+  b.push(s.place);
+  if (s.labialised) b.push('labialised');
+  if (s.lateral) b.push('lateral');
+  b.push(s.manner);
+  return b.join(' ');
+}
+function autoV(s){
+  const b = [];
+  if (s.long) b.push('long');
+  if (s.nasalised) b.push('nasalised');
+  if (s.rhotic) b.push('r-coloured');
+  b.push(s.height, s.backness, s.round ? 'rounded' : 'unrounded', 'vowel');
+  return b.join(' ');
+}
+function reg(sym, s, name){
+  if (!valid(s)) throw new Error('invalid bundle for ' + sym);
+  SYMBOLS[sym] = s;
+  NAMES[sym] = name || (s.kind === 'C' ? autoC(s) : autoV(s));
+  const k = key(s);
+  if (BY_KEY[k]) throw new Error(`bundle collision: ${sym} vs ${BY_KEY[k]}`);
+  BY_KEY[k] = sym;
+}
+function C(sym, place, manner, voiced, o){
+  o = o || {};
+  reg(sym, seg({kind:'C', place, manner, voiced,
+    articulator: o.artic || PLACE_DEFAULT_ARTIC[place],
+    phonation: o.phon || 'plain', lateral: !!o.lateral, labialised: !!o.labial}), o.name);
+}
+function V(sym, height, backness, o){
+  o = o || {};
+  reg(sym, seg({kind:'V', height, backness, round:!!o.round,
+    long:!!o.long, nasalised:!!o.nasal, rhotic:!!o.rhotic}), o.name);
+}
+
+/* plosives */
+C('p','bilabial','plosive',false);            C('b','bilabial','plosive',true);
+C('t','alveolar','plosive',false);            C('d','alveolar','plosive',true);
+C('t̪','dental','plosive',false,{artic:'laminal'});
+C('d̪','dental','plosive',true,{artic:'laminal'});
+C('ʈ','postalveolar','plosive',false,{artic:'apical',name:'voiceless retroflex plosive'});
+C('ɖ','postalveolar','plosive',true,{artic:'apical',name:'voiced retroflex plosive'});
+C('c','palatal','plosive',false);             C('ɟ','palatal','plosive',true);
+C('k','velar','plosive',false);               C('g','velar','plosive',true);
+C('q','uvular','plosive',false);              C('ɢ','uvular','plosive',true);
+C('ʔ','glottal','plosive',false);
+/* aspirated */
+C('pʰ','bilabial','plosive',false,{phon:'aspirated'});
+C('tʰ','alveolar','plosive',false,{phon:'aspirated'});
+C('t̪ʰ','dental','plosive',false,{artic:'laminal',phon:'aspirated'});
+C('ʈʰ','postalveolar','plosive',false,{artic:'apical',phon:'aspirated',name:'aspirated voiceless retroflex plosive'});
+C('kʰ','velar','plosive',false,{phon:'aspirated'});
+/* breathy */
+C('bʱ','bilabial','plosive',true,{phon:'breathy'});
+C('d̪ʱ','dental','plosive',true,{artic:'laminal',phon:'breathy'});
+C('ɖʱ','postalveolar','plosive',true,{artic:'apical',phon:'breathy',name:'breathy voiced retroflex plosive'});
+C('gʱ','velar','plosive',true,{phon:'breathy'});
+/* tense */
+C('p͈','bilabial','plosive',false,{phon:'tense'});
+C('t͈','alveolar','plosive',false,{phon:'tense'});
+C('k͈','velar','plosive',false,{phon:'tense'});
+/* affricates */
+C('ts','alveolar','affricate',false);         C('dz','alveolar','affricate',true);
+C('tsʰ','alveolar','affricate',false,{phon:'aspirated'});
+C('ts͈','alveolar','affricate',false,{phon:'tense'});
+C('tʃ','postalveolar','affricate',false,{artic:'laminal'});
+C('dʒ','postalveolar','affricate',true,{artic:'laminal'});
+C('tʃʰ','postalveolar','affricate',false,{artic:'laminal',phon:'aspirated'});
+C('ʈʂ','postalveolar','affricate',false,{artic:'apical',name:'voiceless retroflex affricate'});
+C('ʈʂʰ','postalveolar','affricate',false,{artic:'apical',phon:'aspirated',name:'aspirated voiceless retroflex affricate'});
+C('tɕ','alveolopalatal','affricate',false);   C('dʑ','alveolopalatal','affricate',true);
+C('tɕʰ','alveolopalatal','affricate',false,{phon:'aspirated'});
+/* fricatives */
+C('f','labiodental','fricative',false);       C('v','labiodental','fricative',true);
+C('ɸ','bilabial','fricative',false);          C('β','bilabial','fricative',true);
+C('θ','dental','fricative',false,{artic:'laminal'});
+C('ð','dental','fricative',true,{artic:'laminal'});
+C('s','alveolar','fricative',false,{artic:'laminal'});
+C('z','alveolar','fricative',true,{artic:'laminal'});
+C('s͈','alveolar','fricative',false,{artic:'laminal',phon:'tense'});
+C('ʃ','postalveolar','fricative',false,{artic:'laminal'});
+C('ʒ','postalveolar','fricative',true,{artic:'laminal'});
+C('ʂ','postalveolar','fricative',false,{artic:'apical',name:'voiceless retroflex fricative'});
+C('ʐ','postalveolar','fricative',true,{artic:'apical',name:'voiced retroflex fricative'});
+C('ɕ','alveolopalatal','fricative',false);    C('ʑ','alveolopalatal','fricative',true);
+C('ç','palatal','fricative',false);           C('ʝ','palatal','fricative',true);
+C('x','velar','fricative',false);             C('ɣ','velar','fricative',true);
+C('χ','uvular','fricative',false);            C('ʁ','uvular','fricative',true);
+C('ħ','pharyngeal','fricative',false);        C('ʕ','pharyngeal','fricative',true);
+C('h','glottal','fricative',false);           C('ɦ','glottal','fricative',true);
+C('ɬ','alveolar','fricative',false,{artic:'laminal',lateral:true});
+/* nasals */
+C('m','bilabial','nasal',true);               C('ɱ','labiodental','nasal',true);
+C('n','alveolar','nasal',true);
+C('n̪','dental','nasal',true,{artic:'laminal'});
+C('ɳ','postalveolar','nasal',true,{artic:'apical',name:'retroflex nasal'});
+C('ɲ','palatal','nasal',true);                C('ŋ','velar','nasal',true);
+C('ɴ','uvular','nasal',true);
+/* approximants, taps, trills, laterals */
+C('j','palatal','approximant',true);
+C('ɥ','palatal','approximant',true,{labial:true,name:'labialised palatal approximant'});
+C('w','velar','approximant',true,{labial:true,name:'labialised velar approximant'});
+C('ɰ','velar','approximant',true);
+/* NOTE: bunched /r\/ and curled /r\`/ are the same bundle here — both apical
+   post-alveolar approximants, free variants for most speakers. One node. */
+C('ɹ','postalveolar','approximant',true,{artic:'apical'});
+C('ɾ','alveolar','tap',true);
+C('ɽ','postalveolar','tap',true,{artic:'apical',name:'retroflex tap'});
+C('r','alveolar','trill',true);               C('ʀ','uvular','trill',true);
+C('ʙ','bilabial','trill',true);
+C('l','alveolar','approximant',true,{lateral:true});
+C('l̪','dental','approximant',true,{artic:'laminal',lateral:true});
+C('ɭ','postalveolar','approximant',true,{artic:'apical',lateral:true,name:'retroflex lateral approximant'});
+C('ʎ','palatal','approximant',true,{lateral:true});
+C('ʟ','velar','approximant',true,{lateral:true});
+
+/* vowels */
+V('i','close','front');            V('y','close','front',{round:true});
+V('ɨ','close','central');          V('ʉ','close','central',{round:true});
+V('ɯ','close','back');             V('u','close','back',{round:true});
+V('ɪ','near-close','front');       V('ʏ','near-close','front',{round:true});
+V('ʊ','near-close','back',{round:true});
+V('e','close-mid','front');        V('ø','close-mid','front',{round:true});
+V('ɘ','close-mid','central');      V('ɵ','close-mid','central',{round:true});
+V('ɤ','close-mid','back');         V('o','close-mid','back',{round:true});
+V('ə','mid','central');
+V('ɛ','open-mid','front');         V('œ','open-mid','front',{round:true});
+V('ɜ','open-mid','central');       V('ʌ','open-mid','back');
+V('ɔ','open-mid','back',{round:true});
+V('æ','near-open','front');        V('ɐ','near-open','central');
+V('a','open','front');             V('ɶ','open','front',{round:true});
+V('ä','open','central');
+V('ɑ','open','back');              V('ɒ','open','back',{round:true});
+
+for (const [base, long] of [['i','iː'],['u','uː'],['e','eː'],['o','oː'],['a','aː'],
+  ['ɛ','ɛː'],['ɔ','ɔː'],['ɑ','ɑː'],['y','yː'],['ø','øː'],['ɯ','ɯː'],['ɨ','ɨː'],['æ','æː']]){
+  const s = SYMBOLS[base];
+  V(long, s.height, s.backness, {round:s.round, long:true});
+}
+for (const [base, nas] of [['ɛ','ɛ̃'],['ɑ','ɑ̃'],['ɔ','ɔ̃'],['œ','œ̃'],['a','ã'],
+  ['i','ĩ'],['u','ũ'],['o','õ'],['e','ẽ']]){
+  const s = SYMBOLS[base];
+  V(nas, s.height, s.backness, {round:s.round, nasal:true});
+}
+V('ɚ','mid','central',{rhotic:true});
+V('ɝ','open-mid','central',{rhotic:true});
+
+function label(s){
+  return BY_KEY[key(s)] || '[' + (s.kind === 'C' ? autoC(s) : autoV(s)) + ']';
+}
+
+/* ======================================================================== */
+/*  Languages                                                               */
+/*  phonemes  — contrastive; free anchors.                                  */
+/*  allophones — produced but never on purpose (English [4] in "butter").   */
+/*               Usable at a small penalty; often the cheapest win there is.*/
+/* ======================================================================== */
+
+const LANGUAGES = {
+  'english-ga': { name:'English (General American)',
+    phonemes:['p','b','t','d','k','g','tʃ','dʒ','f','v','θ','ð','s','z','ʃ','ʒ','h',
+      'm','n','ŋ','l','ɹ','j','w','i','ɪ','e','ɛ','æ','ə','ʌ','ɑ','ɔ','o','ʊ','u','ɚ','ɝ'],
+    allophones:['ɾ','ʔ','pʰ','tʰ','kʰ'],
+    notes:'Flapped [ɾ] in "butter", glottal stop in "uh-oh", aspirated stops word-initially.' },
+
+  'english-rp': { name:'English (Southern British)',
+    phonemes:['p','b','t','d','k','g','tʃ','dʒ','f','v','θ','ð','s','z','ʃ','ʒ','h',
+      'm','n','ŋ','l','ɹ','j','w','iː','ɪ','e','ɛ','æ','ə','ʌ','ɑː','ɒ','ɔː','ʊ','uː','ɜ'],
+    allophones:['ʔ','pʰ','tʰ','kʰ'] },
+
+  'mandarin': { name:'Mandarin Chinese',
+    phonemes:['p','pʰ','t','tʰ','k','kʰ','ts','tsʰ','ʈʂ','ʈʂʰ','tɕ','tɕʰ',
+      'f','s','ʂ','ɕ','x','ʐ','m','n','ŋ','l','j','w','ɥ','i','y','u','ɤ','a','ɚ','ə'],
+    allophones:[],
+    notes:'Aspiration, not voicing, is the contrast in the stop series.' },
+
+  'spanish': { name:'Spanish (Peninsular)',
+    phonemes:['p','b','t̪','d̪','k','g','tʃ','f','θ','s','x',
+      'm','n̪','ɲ','l̪','ʎ','ɾ','r','j','w','i','e','a','o','u'],
+    allophones:['β','ð','ɣ','ŋ'],
+    notes:'Voiced stops lenite between vowels — free anchors for /ð/ and /ɣ/.' },
+
+  'french': { name:'French',
+    phonemes:['p','b','t̪','d̪','k','g','f','v','s','z','ʃ','ʒ','ʁ',
+      'm','n̪','ɲ','l̪','j','w','ɥ','i','y','u','e','ø','o','ɛ','œ','ɔ','a','ə',
+      'ɛ̃','ɑ̃','ɔ̃','œ̃'], allophones:[] },
+
+  'german': { name:'German (Standard)',
+    phonemes:['p','b','t','d','k','g','ts','tʃ','f','v','s','z','ʃ','ç','x','h','ʁ',
+      'm','n','ŋ','l','j','i','iː','ɪ','y','yː','ʏ','u','uː','ʊ','e','eː','ø','øː',
+      'œ','o','oː','ɔ','ɛ','ɛː','a','aː','ə'],
+    allophones:['ʔ','pʰ','tʰ','kʰ','ɐ'] },
+
+  'japanese': { name:'Japanese (Tokyo)',
+    phonemes:['p','b','t','d','k','g','ts','tɕ','dʑ','ɸ','s','z','ɕ','h','ç',
+      'm','n','ɲ','ɴ','ɾ','j','w','i','e','a','o','ɯ','iː','eː','aː','oː'],
+    allophones:['ɰ','ŋ','dz'],
+    notes:'No /l/ ~ /ɹ/ contrast; the flap [ɾ] is the anchor for both.' },
+
+  'korean': { name:'Korean (Seoul)',
+    phonemes:['p','pʰ','p͈','t','tʰ','t͈','k','kʰ','k͈','ts','tsʰ','ts͈','s','s͈','h',
+      'm','n','ŋ','l','ɾ','j','w','i','e','ɛ','a','o','u','ɯ','ʌ'],
+    allophones:[],
+    notes:'Three-way plain / aspirated / tense stop contrast; [l] and [ɾ] are one phoneme.' },
+
+  'thai': { name:'Thai',
+    phonemes:['p','pʰ','b','t','tʰ','d','k','kʰ','ʔ','tɕ','tɕʰ','f','s','h',
+      'm','n','ŋ','l','ɾ','j','w','i','iː','e','eː','ɛ','ɛː','a','aː','ɔ','ɔː',
+      'o','oː','u','uː','ɯ','ɯː','ɤ','ə'],
+    allophones:[],
+    notes:'Three-way voiced / plain / aspirated at bilabial and alveolar; length is contrastive.' },
+
+  'russian': { name:'Russian',
+    phonemes:['p','b','t̪','d̪','k','g','ts','tɕ','f','v','s','z','ʂ','ʐ','ɕ','x',
+      'm','n̪','l̪','r','j','i','ɨ','e','a','o','u'],
+    allophones:['ɲ','ʎ','ɣ','ʑ'],
+    notes:'Palatalised counterparts of most consonants are omitted here for clarity.' },
+
+  'polish': { name:'Polish',
+    phonemes:['p','b','t̪','d̪','k','g','ts','dz','ʈʂ','tɕ','dʑ',
+      'f','v','s','z','ʂ','ʐ','ɕ','ʑ','x','m','n̪','ɲ','l̪','r','j','w',
+      'i','ɨ','ɛ','a','ɔ','u','ɛ̃','ɔ̃'],
+    allophones:[],
+    notes:'Has the full s / ʂ / ɕ three-way sibilant contrast — a strong L1 for Mandarin.' },
+
+  'hindi': { name:'Hindi',
+    phonemes:['p','pʰ','b','bʱ','t̪','t̪ʰ','d̪','d̪ʱ','ʈ','ʈʰ','ɖ','ɖʱ',
+      'k','kʰ','g','gʱ','tʃ','tʃʰ','dʒ','s','ʃ','h','ɦ',
+      'm','n','ɳ','ŋ','l','ɾ','ɽ','j','w',
+      'i','iː','ɪ','u','uː','ʊ','e','o','ɛ','ɔ','ə','aː'],
+    allophones:[],
+    notes:'Four-way stop contrast and a true retroflex series — a strong L1 for Mandarin retroflexes.' },
+
+  'arabic-msa': { name:'Arabic (Modern Standard)',
+    phonemes:['b','t','d','k','g','q','ʔ','dʒ','f','θ','ð','s','z','ʃ','x','ɣ',
+      'ħ','ʕ','h','m','n','l','r','j','w','i','iː','a','aː','u','uː'],
+    allophones:[] },
+
+  'portuguese-br': { name:'Portuguese (Brazilian)',
+    phonemes:['p','b','t','d','k','g','tʃ','dʒ','f','v','s','z','ʃ','ʒ','x',
+      'm','n','ɲ','l','ʎ','ɾ','j','w','i','e','ɛ','a','ɔ','o','u','ĩ','ẽ','ã','õ','ũ'],
+    allophones:[] },
+
+  'italian': { name:'Italian',
+    phonemes:['p','b','t̪','d̪','k','g','ts','dz','tʃ','dʒ','f','v','s','z','ʃ',
+      'm','n̪','ɲ','l̪','ʎ','r','j','w','i','e','ɛ','a','ɔ','o','u'],
+    allophones:[] },
+
+  'turkish': { name:'Turkish',
+    phonemes:['p','b','t','d','k','g','tʃ','dʒ','f','v','s','z','ʃ','ʒ','h',
+      'm','n','l','ɾ','j','i','y','ɯ','u','e','ø','a','o'],
+    allophones:['c','ɟ','ɣ'] },
+
+  'haitian-creole': { name:'Haitian Creole (experimental)',
+    phonemes:['p','b','t','d','k','g','dʒ','f','v','s','z','ʃ','ʒ','h',
+      'm','n','ŋ','l','ɣ','j','w',
+      'i','e','ɛ','a','o','ɔ','u','ɛ̃','ɑ̃','ɔ̃'],
+    allophones:[],
+    notes:'Experimental. Seven oral vowels plus three nasal ones from French; '
+        + 'no schwa, no dental fricatives, no /tʃ/. The r is a voiced velar fricative, '
+        + 'not the English approximant, and vocalises toward [w] near back vowels.' },
+
+  'vietnamese': { name:'Vietnamese (Northern)',
+    phonemes:['p','b','t','tʰ','d','k','ʔ','f','v','s','z','x','ɣ','h',
+      'm','n','ɲ','ŋ','l','j','w','i','e','ɛ','a','ɔ','o','u','ɯ','ɤ','ə'],
+    allophones:[] },
+};
+
+/* ======================================================================== */
+/*  Plain-language step descriptions                                        */
+/* ======================================================================== */
+
+const PLACE_WORDS = {
+  bilabial:'the lips', labiodental:'lip against teeth', dental:'the teeth',
+  alveolar:'the ridge behind the teeth', postalveolar:'just behind the ridge',
+  alveolopalatal:'the front of the hard palate', palatal:'the hard palate',
+  velar:'the soft palate', uvular:'the uvula', pharyngeal:'the throat',
+  glottal:'the glottis',
+};
+const ARTIC_WORDS = {
+  apical:'the tip of the tongue', laminal:'the blade of the tongue',
+  dorsal:'the body of the tongue', labial:'the lips',
+  radical:'the root of the tongue', laryngeal:'the larynx',
+};
+const MANNER_WORDS = {
+  'plosive>affricate':'hold the release so it opens into a hiss instead of a pop',
+  'affricate>plosive':'cut the hiss off the release — pure pop',
+  'affricate>fricative':'drop the closure; start from the hiss with no stop',
+  'fricative>affricate':'close first, then release into the hiss',
+  'fricative>approximant':'open the channel until it stops hissing',
+  'approximant>fricative':'narrow the channel until it hisses',
+  'plosive>fricative':'stop closing all the way — leave a gap that hisses',
+  'fricative>plosive':'close it off completely instead of leaving a gap',
+  'plosive>nasal':'drop the velum and let the air out through the nose',
+  'nasal>plosive':'seal the nose and let the pressure build',
+  'plosive>tap':'make the closure ballistic — one quick strike, no hold',
+  'tap>plosive':'hold the contact instead of striking through it',
+  'tap>trill':'let the contact vibrate instead of striking once',
+  'trill>tap':'one strike only; stop the vibration',
+  'tap>approximant':'come close but stop touching',
+  'approximant>tap':'let it touch, once, in passing',
+};
+const PHON_WORDS = {
+  'plain>aspirated':'add a puff of air after the release',
+  'aspirated>plain':'cut the puff of air — release straight into the vowel',
+  'plain>breathy':'keep the voicing going and push extra breath through it',
+  'breathy>plain':'cut the extra breath; clean voicing only',
+  'aspirated>breathy':'voice it while keeping the breath going',
+  'breathy>aspirated':'stop the voicing; keep the breath',
+  'plain>tense':'stiffen the throat and hold the closure longer',
+  'tense>plain':'relax the throat; shorten the closure',
+  'plain>ejective':'close the glottis and squeeze the air out with it',
+  'ejective>plain':'let the lungs, not the glottis, push the air',
+  'plain>implosive':'pull the larynx down so air flows inward on release',
+  'implosive>plain':'push outward instead of drawing inward',
+};
+
+function describe(change){
+  const [dim, from, to] = change;
+  switch (dim){
+    case 'place':       return `move the constriction to ${PLACE_WORDS[to]}`;
+    case 'articulator': return `hand the job from ${ARTIC_WORDS[from]} to ${ARTIC_WORDS[to]}`;
+    case 'manner':      return MANNER_WORDS[`${from}>${to}`] || `change the manner from ${from} to ${to}`;
+    case 'voice':       return to ? 'turn the voicing on' : 'turn the voicing off';
+    case 'phonation':   return PHON_WORDS[`${from}>${to}`] || `change phonation from ${from} to ${to}`;
+    case 'lateral':     return to ? 'let the air out over the sides of the tongue'
+                                  : 'close off the sides; send the air down the centre';
+    case 'labialised':  return to ? 'round and protrude the lips at the same time'
+                                  : 'take the lip rounding off it';
+    case 'height':      return `move the tongue to ${to}`;
+    case 'backness':    return `move the tongue ${to}`;
+    case 'round':       return to ? 'round the lips' : 'spread the lips';
+    case 'long':        return to ? 'hold it longer' : 'cut it short';
+    case 'nasalised':   return to ? 'drop the velum — let the vowel resonate in the nose'
+                                  : 'seal the nose; keep it oral';
+    case 'rhotic':      return to ? 'bunch or curl the tongue to r-colour it'
+                                  : 'drop the r-colouring';
+    default:            return `${dim}: ${from} → ${to}`;
+  }
+}
+
+/* ======================================================================== */
+/*  What KIND of change is this?                                            */
+/*  Every step already knows its dimension; a bridge is tagged with the     */
+/*  set of dimensions it touches, in a fixed order so the label is stable.  */
+/* ======================================================================== */
+
+const DIM_ORDER = ['place','articulator','manner','voice','phonation','lateral',
+                   'labialised','height','backness','round','long','nasalised','rhotic'];
+
+const DIM_LABEL = {
+  place:'Place', articulator:'Articulator', manner:'Manner', voice:'Voicing',
+  phonation:'Phonation', lateral:'Laterality', labialised:'Rounding',
+  height:'Height', backness:'Backness', round:'Rounding', long:'Length',
+  nasalised:'Nasality', rhotic:'R-colouring',
+};
+
+// one line on what that kind of change actually asks of the learner
+const DIM_GLOSS = {
+  place:'same gesture, different spot along the roof of the mouth',
+  articulator:'same spot, different part of the tongue doing the work',
+  manner:'same spot, different kind of obstruction',
+  voice:'same gesture, vocal folds on or off',
+  phonation:'same gesture, different behaviour at the larynx',
+  lateral:'same contact, air rerouted over the sides of the tongue',
+  labialised:'same tongue position, lips added or removed',
+  height:'jaw and tongue body raised or lowered',
+  backness:'tongue body forward or back',
+  round:'lips rounded or spread',
+  long:'same vowel, held longer or shorter',
+  nasalised:'same vowel, velum opened to the nose',
+  rhotic:'same vowel, tongue bunched or curled',
+};
+
+/** the ordered, de-duplicated dimensions a path touches */
+function kindsOf(steps){
+  const seen = new Set(steps.map(s => s.dim));
+  return DIM_ORDER.filter(d => seen.has(d));
+}
+
+
+/* ========================================================================
+   SELF-CHECKS — physical tests the learner can verify without judging sound.
+
+   The point of these is that they DON'T route through the ear. A learner who
+   cannot yet hear a contrast can still feel whether their larynx is buzzing or
+   whether a paper strip moved. That is what makes production-before-perception
+   safe: the objective check catches a wrong articulation before the learner
+   starts training their ear against their own mistake.
+
+   Each check is chosen from the feature that actually changed, so a compound
+   bridge gets one check per changed feature.
+
+   Some features have NO check I'd trust. Those are returned with
+   reliable:false and say so plainly rather than inventing a test.
+   ======================================================================== */
+
+const MANNER_CHECK = {
+  plosive:     ['Try to hold it', 'You should not be able to. There is a silent moment of complete closure, then a pop. If you can hiss continuously, you have not sealed it off.'],
+  fricative:   ['Try to hold it', 'You should be able to hiss steadily for five seconds without the sound changing. If it stops dead or pops, you are closing all the way.'],
+  affricate:   ['Listen for two parts', 'Say it very slowly. There should be a complete stop first, then a hiss out of the release — one gesture, two phases. A pure hiss means you skipped the closure.'],
+  approximant: ['Hold it and listen for friction', 'You should be able to sustain it with no hiss at all. If it hisses, the channel is too narrow.'],
+  tap:         ['Try to hold it', 'You should not be able to. It is one quick strike — the tongue passes through the contact rather than resting on it.'],
+  trill:       ['Hold it for two seconds', 'You should feel the tongue flapping repeatedly on its own. If you are moving it deliberately, that is a series of taps, not a trill.'],
+  nasal:       ['Pinch your nose', 'The sound should stop completely. If it keeps going, the air is escaping through your mouth and it is not nasal.'],
+};
+
+function checkFor(step){
+  const [dim, from, to] = step;
+
+  switch (dim){
+    case 'voice':
+      return to
+        ? { title:'Feel for the buzz',
+            how:'Put two fingers on the front of your throat and say it, drawn out.',
+            pass:'Buzzing the whole time.' }
+        : { title:'Feel for silence',
+            how:'Two fingers on the front of your throat, say it drawn out.',
+            pass:'No buzz at all — just breath. If it hums, the voicing is still on.' };
+
+    case 'phonation':
+      if (to === 'aspirated')
+        return { title:'The paper test',
+                 how:'Hold a strip of paper a few centimetres from your lips and say it.',
+                 pass:'The paper kicks visibly on the release.' };
+      if (from === 'aspirated' && to === 'plain')
+        return { title:'The paper test, inverted',
+                 how:'Paper strip at your lips, say it.',
+                 pass:'The paper barely moves. English speakers leak aspiration here without noticing.' };
+      if (to === 'breathy')
+        return { title:'Buzz and breath together',
+                 how:'Fingers on your throat, other hand palm-up in front of your mouth.',
+                 pass:'Buzzing at the throat AND warm air on your palm, at the same time. Either one alone is wrong.' };
+      if (to === 'ejective')
+        return { title:'Hold your breath and try it',
+                 how:'Take a breath, hold it, then produce the sound without letting the held breath go.',
+                 pass:'It still works — the air comes from your larynx, not your lungs.' };
+      if (to === 'implosive')
+        return { title:'Feel the direction',
+                 how:'Fingers on your throat; produce it slowly.',
+                 pass:'Your larynx drops and air moves inward on release, not outward.' };
+      if (to === 'tense')
+        return { title:'No reliable self-check', reliable:false,
+                 how:'Korean tense consonants involve stiffened vocal folds and a longer closure.',
+                 pass:'There is no physical test for this I would trust. Get a speaker to check you.' };
+      return null;
+
+    case 'manner': {
+      const m = MANNER_CHECK[to];
+      return m ? { title:m[0], how:'Produce the target sound on its own.', pass:m[1] } : null;
+    }
+
+    case 'nasalised':
+      return to
+        ? { title:'Pinch your nose',
+            how:'Say the vowel, then pinch your nostrils shut halfway through.',
+            pass:'The sound changes noticeably — air was going through your nose.' }
+        : { title:'Pinch your nose',
+            how:'Say the vowel, then pinch your nostrils shut halfway through.',
+            pass:'Nothing changes. If it does, you are nasalising a vowel that should be oral.' };
+
+    case 'lateral':
+      return to
+        ? { title:'The inhale test',
+            how:'Hold the tongue position and breathe IN sharply.',
+            pass:'Cold along the SIDES of your tongue, not down the middle.' }
+        : { title:'The inhale test',
+            how:'Hold the position and breathe in sharply.',
+            pass:'Cold down the CENTRE. If it is cold at the sides, air is still escaping laterally.' };
+
+    case 'place':
+      return { title:'Find the cold spot',
+               how:'Hold the articulation without voicing it and breathe IN sharply.',
+               pass:'The cold patch marks exactly where your constriction is. It should sit at '
+                    + (PLACE_WORDS[to] || to) + '.' };
+
+    case 'articulator':
+      if (to === 'apical')
+        return { title:'Check for the pocket',
+                 how:'Hold the sound and feel underneath your tongue tip with your attention.',
+                 pass:'There is an open pocket between the underside of your tip and the floor of your mouth. The tip, not the flat behind it, is the highest part.' };
+      if (to === 'laminal')
+        return { title:'Check what is highest',
+                 how:'Hold the sound and notice which part of your tongue is closest to the roof.',
+                 pass:'The flat of the blade, just behind the tip, with no hollow underneath.' };
+      if (to === 'dorsal')
+        return { title:'Check what is highest',
+                 how:'Hold the sound and notice where the contact is.',
+                 pass:'The body of your tongue is doing the work; the tip is idle behind your teeth.' };
+      return null;
+
+    case 'round':
+    case 'labialised':
+      return to
+        ? { title:'Mirror, or fingertips',
+            how:'Rest a fingertip at each corner of your mouth and say it.',
+            pass:'The corners pull IN and the lips push forward.' }
+        : { title:'Mirror, or fingertips',
+            how:'Fingertip at each corner of your mouth, say it.',
+            pass:'The corners stay wide. Rounding a vowel that should be spread is one of the most audible accent markers.' };
+
+    case 'height':
+      return { title:'Count fingers',
+               how:'Say the vowel and hold it, then see how many stacked fingers fit between your front teeth.',
+               pass:'Roughly one finger for a close vowel, two for mid, three for open. Compare against the vowel you started from — the gap should change in the right direction.' };
+
+    case 'long':
+      return to
+        ? { title:'Time it',
+            how:'Say the short version, then the long one, back to back.',
+            pass:'The long one lasts about twice as long. Say them as a pair; length is relative, not absolute.' }
+        : { title:'Time it',
+            how:'Say them back to back.',
+            pass:'Clearly the shorter of the two.' };
+
+    case 'backness':
+      return { title:'No reliable self-check', reliable:false,
+               how:'Tongue backness has no clean physical test — the inhale trick is too diffuse for vowels.',
+               pass:'Use a mirror for the lips and check the rest against a speaker.' };
+
+    case 'rhotic':
+      return { title:'No reliable self-check', reliable:false,
+               how:'R-colouring can be made by bunching or by curling, and both are correct.',
+               pass:'No physical test distinguishes right from wrong here.' };
+
+    default:
+      return null;
+  }
+}
+
+/** one check per changed feature, in the order the steps happen */
+function checksFor(bridge){
+  const out = [], seen = new Set();
+  for (const st of bridge.steps){
+    if (seen.has(st.dim)) continue;
+    seen.add(st.dim);
+    const c = checkFor([st.dim, st.from, st.toVal]);
+    if (c) out.push(Object.assign({ dim: st.dim, reliable: true }, c));
+  }
+  return out;
+}
+
+/* ======================================================================== */
+/*  Binary heap + multi-source Dijkstra                                     */
+/* ======================================================================== */
+
+// ties broken on the node key so a run is reproducible, not heap-order dependent
+const lt = (x, y) => x[0] !== y[0] ? x[0] < y[0] : x[1] < y[1];
+const le = (x, y) => !lt(y, x);
+
+class Heap {
+  constructor(){ this.a = []; }
+  get size(){ return this.a.length; }
+  push(item){
+    const a = this.a; a.push(item);
+    let i = a.length - 1;
+    while (i > 0){
+      const p = (i - 1) >> 1;
+      if (le(a[p], a[i])) break;
+      [a[p], a[i]] = [a[i], a[p]]; i = p;
+    }
+  }
+  pop(){
+    const a = this.a, top = a[0], last = a.pop();
+    if (a.length){
+      a[0] = last;
+      let i = 0;
+      for (;;){
+        const l = 2*i+1, r = l+1; let m = i;
+        if (l < a.length && lt(a[l], a[m])) m = l;
+        if (r < a.length && lt(a[r], a[m])) m = r;
+        if (m === i) break;
+        [a[m], a[i]] = [a[i], a[m]]; i = m;
+      }
+    }
+    return top;
+  }
+}
+
+function search(sources, targets, maxCost){
+  maxCost = maxCost ?? 14;
+  const dist = new Map(), prev = new Map(), origin = new Map(), seen = new Set();
+  const pq = new Heap();
+
+  for (const [k, {cost, seg: s, sym, kind, langs}] of sources){
+    if (!dist.has(k) || cost < dist.get(k)){
+      dist.set(k, cost); origin.set(k, [sym, kind, langs]); pq.push([cost, k, s]);
+    }
+  }
+
+  const want = new Set(targets.keys());
+  const found = new Map();
+
+  while (pq.size){
+    const [d, k, s] = pq.pop();
+    if (seen.has(k)) continue;
+    seen.add(k);
+
+    if (want.has(k)){
+      found.set(k, [d, s]);
+      if (found.size === want.size) break;
+    }
+    if (d > maxCost) continue;
+
+    for (const [nxt, w, change] of neighbours(s)){
+      const nd = d + w;
+      if (nd > maxCost) continue;
+      const nk = key(nxt);
+      if (!dist.has(nk) || nd < dist.get(nk) - 1e-9){
+        dist.set(nk, nd);
+        prev.set(nk, [k, s, change]);
+        origin.set(nk, origin.get(k));
+        pq.push([nd, nk, nxt]);
+      }
+    }
+  }
+
+  const out = new Map();
+  for (const [k, sym] of targets){
+    if (!found.has(k)) continue;
+    const [d, endSeg] = found.get(k);
+    const path = [];
+    let cur = k, curSeg = endSeg;
+    while (prev.has(cur)){
+      const [pk, pSeg, change] = prev.get(cur);
+      path.push({
+        to: label(curSeg), do: describe(change),
+        dim: change[0], from: change[1], toVal: change[2],
+      });
+      cur = pk; curSeg = pSeg;
+    }
+    path.reverse();
+    out.set(sym, { cost: d, steps: path, origin: origin.get(k) });
+  }
+  return out;
+}
+
+/* ======================================================================== */
+/*  Public API                                                              */
+/* ======================================================================== */
+
+const cmpCode = (a,b) => (a < b ? -1 : a > b ? 1 : 0);
+
+/**
+ * plan(l1, l2) — l1 is one language code or an array of them.
+ *
+ * With several native languages the inventories are UNIONED before the search
+ * runs, so an anchor can come from any of them. This is not the same as running
+ * the pairs separately and merging: a Polish-English bilingual learning Mandarin
+ * gets the sibilants free from Polish AND the vowels free from English, and for
+ * anything still missing the search picks whichever language offers the cheapest
+ * route. Each bridge records which language(s) its anchor came from.
+ */
+function plan(l1, l2Code, alsoKnown){
+  const l1Codes = (Array.isArray(l1) ? l1 : [l1]).filter(c => LANGUAGES[c]);
+  const l2 = LANGUAGES[l2Code];
+  // sounds acquired since the start — they count as owned, and can serve as
+  // anchors for anything taught later. This is what makes a curriculum
+  // progressive: once you have ʂ, the next retroflex is one step from it
+  // rather than two from English /ʃ/.
+  const acquired = (alsoKnown || []).filter(s => SYMBOLS[s]);
+
+  // symbol -> [languages that have it], phonemes winning over allophones
+  const owners = new Map(), alloOwners = new Map();
+  for (const code of l1Codes){
+    for (const sym of LANGUAGES[code].phonemes)
+      (owners.get(sym) || owners.set(sym, []).get(sym)).push(code);
+    for (const sym of (LANGUAGES[code].allophones || []))
+      (alloOwners.get(sym) || alloOwners.set(sym, []).get(sym)).push(code);
+  }
+  for (const sym of acquired)
+    if (!owners.has(sym)) owners.set(sym, ['acquired']);
+  const l1ph = new Set(owners.keys());
+  const l1al = [...alloOwners.keys()].filter(s => !l1ph.has(s));
+
+  const sources = new Map();
+  for (const sym of l1ph){
+    const s = SYMBOLS[sym];
+    sources.set(key(s), { cost:0, seg:s, sym, kind:'phoneme', langs: owners.get(sym) });
+  }
+  for (const sym of l1al){
+    const s = SYMBOLS[sym], k = key(s);
+    if (!sources.has(k))
+      sources.set(k, { cost:ALLOPHONE_PENALTY, seg:s, sym, kind:'allophone',
+                       langs: alloOwners.get(sym) });
+  }
+
+  const already = [], fresh = [];
+  for (const sym of l2.phonemes) (l1ph.has(sym) ? already : fresh).push(sym);
+  // NOTE: "already" means the feature bundles match. It does NOT mean the two
+  // sounds are phonetically identical — Spanish /p/ and English /p/ differ in
+  // VOT, and this model has no way to see that yet.
+
+  const targets = new Map(fresh.map(s => [key(SYMBOLS[s]), s]));
+  const results = search(sources, targets);
+
+  const bridges = [];
+  for (const sym of fresh){
+    const r = results.get(sym);
+    if (!r) continue;
+    const kinds = kindsOf(r.steps);
+    bridges.push({
+      target: sym, targetName: NAMES[sym],
+      anchor: r.origin[0], anchorName: NAMES[r.origin[0]], anchorKind: r.origin[1],
+      anchorLangs: r.origin[2] || [],   // which native language(s) supply it
+      cost: Math.round(r.cost * 100) / 100,
+      steps: r.steps,
+      // what kind of change the anchor has to make to become the target
+      kinds,                                              // ['articulator', ...]
+      kindLabel: kinds.length ? kinds.map(d => DIM_LABEL[d]).join(' + ')
+                              : 'No change',              // 'Articulator + Phonation'
+      kindGloss: kinds.length === 1 ? DIM_GLOSS[kinds[0]]
+               : kinds.length === 0 ? 'already in your mouth as an allophone'
+               : kinds.length + ' things change at once',
+      primary: kinds[0] || 'none',                        // for colour-coding
+      compound: kinds.length > 1,
+    });
+  }
+  // codepoint order on ties, so the ordering is stable across locales
+  bridges.sort((a,b) => a.cost - b.cost ||
+    (a.target < b.target ? -1 : a.target > b.target ? 1 : 0));
+
+  const clusters = {};
+  for (const b of bridges) (clusters[b.anchor] = clusters[b.anchor] || []).push(b);
+  const collisions = {};
+  for (const [a, bs] of Object.entries(clusters)) if (bs.length > 1) collisions[a] = bs;
+
+  const l2set = new Set(l2.phonemes);
+  return {
+    acquired,
+    l1: l1Codes, l1Name: l1Codes.map(c => LANGUAGES[c].name).join(' + '),
+    l1Notes: l1Codes.map(c => LANGUAGES[c].notes).filter(Boolean).join(' '),
+    l2: l2Code, l2Name: l2.name, l2Notes: l2.notes || '',
+    alreadyHave: already.slice().sort(cmpCode),
+    bridges, collisions,
+    unreachable: fresh.filter(s => !results.has(s)),
+    surplus: [...l1ph].filter(s => !l2set.has(s)).sort(cmpCode),
+  };
+}
+
+
+/* ========================================================================
+   CURRICULUM — walk a frequency-ordered word list and emit lessons.
+
+   The phoneme list is not a syllabus. It is a dependency table, consulted
+   only when a word demands something the learner cannot yet say. Most words
+   teach nothing new; the ones that do interrupt with exactly the sound they
+   need, and then the word.
+
+   Anchors are recomputed as the learner acquires sounds, so a sound taught
+   at word 40 can be the starting point for one taught at word 80.
+   ======================================================================== */
+
+function curriculum(l1, l2Code, words, opts){
+  opts = opts || {};
+  const l1Codes = (Array.isArray(l1) ? l1 : [l1]).filter(c => LANGUAGES[c]);
+
+  const owned = new Set();
+  for (const c of l1Codes) for (const s of LANGUAGES[c].phonemes) owned.add(s);
+
+  const acquired = [];       // in the order they get taught
+  const lessons = [];
+  let unteachable = 0;
+
+  for (const w of words){
+    const needed = [...new Set(w.phonemes)].filter(p => !owned.has(p));
+    const taught = [];
+
+    for (const p of needed){
+      // recompute per sound: earlier sounds in this same word are now available
+      const r = plan(l1Codes, l2Code, acquired);
+      const b = r.bridges.find(x => x.target === p);
+      if (b){
+        taught.push(b);
+        lessons.push({ type:'sound', bridge:b, forWord:w, rank:w.rank });
+      } else {
+        unteachable++;
+        lessons.push({ type:'sound', bridge:null, target:p, forWord:w, rank:w.rank });
+      }
+      owned.add(p);
+      acquired.push(p);
+    }
+
+    lessons.push({ type:'word', word:w, rank:w.rank,
+                   newSounds: taught.map(b => b.target),
+                   free: taught.length === 0 });
+  }
+
+  const wordLessons = lessons.filter(l => l.type === 'word');
+  return {
+    lessons,
+    acquired,
+    totalWords: wordLessons.length,
+    freeWords: wordLessons.filter(l => l.free).length,
+    soundsTaught: acquired.length,
+    unteachable,
+    // how far in before the learner is blocked the first time
+    firstBlockAt: (lessons.find(l => l.type === 'sound') || {}).rank || null,
+  };
+}
+
+function band(cost){
+  if (cost <= 0.75) return 'free';
+  if (cost <= 1.30) return 'one step';
+  if (cost <= 2.60) return 'short';
+  if (cost <= 4.50) return 'long';
+  return 'hard';
+}
+
+root.BridgeEngine = { LANGUAGES, SYMBOLS, NAMES, plan, band, describe,
+                      neighbours, valid, key, label,
+                      DIM_ORDER, DIM_LABEL, DIM_GLOSS, kindsOf, checksFor, curriculum,
+                      PLACE_WORDS, ARTIC_WORDS,
+                      ARTIC_WORD: a => ARTIC_WORDS[a] || a };
+
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+/* ==========================================================================
+   words-mandarin.js — a frequency-ordered word list, and pinyin -> IPA using
+   ONLY symbols already in the Mandarin inventory in bridge-engine.js.
+
+   Deliberate simplifications, all forced by "existing infrastructure only":
+
+   - NO TONE. Deferred, as agreed. Every syllable here is toneless, so 是 shì
+     and 十 shí are the same string to this code. That is wrong about Mandarin
+     and fine for showing the scheduling mechanism.
+   - The apical vowel of shi / si / zhi is written /i/. That is the standard
+     phonemic analysis (an allophone of /i/ after sibilants), and it avoids
+     inventing a symbol.
+   - ie / üe are really [jɛ] / [ɥɛ]; /ɛ/ is not in the Mandarin inventory here,
+     so they map to ɤ.
+   - Diphthongs and nasal finals decompose into sequences of existing phonemes
+     (ai -> a i, ang -> a ŋ) rather than being their own units.
+
+   Every phoneme produced is asserted against the engine's Mandarin inventory
+   at load, so this file cannot silently drift from the feature model.
+   ========================================================================== */
+
+(function (root) {
+'use strict';
+
+/* ---- pinyin initials -> phonemes ---------------------------------------- */
+const INITIALS = {
+  b:['p'],   p:['pʰ'],  m:['m'],   f:['f'],
+  d:['t'],   t:['tʰ'],  n:['n'],   l:['l'],
+  g:['k'],   k:['kʰ'],  h:['x'],
+  j:['tɕ'],  q:['tɕʰ'], x:['ɕ'],
+  zh:['ʈʂ'], ch:['ʈʂʰ'],sh:['ʂ'],  r:['ʐ'],
+  z:['ts'],  c:['tsʰ'], s:['s'],
+};
+
+/* ---- pinyin finals -> phoneme sequences --------------------------------- */
+const FINALS = {
+  a:['a'],       o:['w','ɤ'],   e:['ɤ'],      i:['i'],     u:['u'],   'ü':['y'],
+  ai:['a','i'],  ei:['ə','i'],  ao:['a','u'], ou:['ə','u'],
+  an:['a','n'],  en:['ə','n'],  ang:['a','ŋ'],eng:['ə','ŋ'],ong:['u','ŋ'],
+  er:['ɚ'],
+  ia:['j','a'],  ie:['j','ɤ'],  iao:['j','a','u'], iu:['j','ə','u'],
+  ian:['j','a','n'], 'in':['i','n'], iang:['j','a','ŋ'], ing:['i','ŋ'],
+  iong:['j','u','ŋ'],
+  ua:['w','a'],  uo:['w','ɤ'],  uai:['w','a','i'], ui:['w','ə','i'],
+  uan:['w','a','n'], un:['w','ə','n'], uang:['w','a','ŋ'], ueng:['w','ə','ŋ'],
+  'üe':['ɥ','ɤ'], 'üan':['ɥ','a','n'], 'ün':['y','n'],
+};
+
+/* y- and w- spellings are the same finals wearing a different hat */
+const WHOLE = {
+  yi:['i'], ya:['j','a'], ye:['j','ɤ'], yao:['j','a','u'], you:['j','ə','u'],
+  yan:['j','a','n'], yin:['i','n'], yang:['j','a','ŋ'], ying:['i','ŋ'],
+  yong:['j','u','ŋ'], yu:['y'], yue:['ɥ','ɤ'], yuan:['ɥ','a','n'], yun:['y','n'],
+  wu:['u'], wa:['w','a'], wo:['w','ɤ'], wai:['w','a','i'], wei:['w','ə','i'],
+  wan:['w','a','n'], wen:['w','ə','n'], wang:['w','a','ŋ'], weng:['w','ə','ŋ'],
+  er:['ɚ'], e:['ɤ'], a:['a'], ai:['a','i'], ao:['a','u'], ou:['ə','u'],
+  an:['a','n'], en:['ə','n'], ang:['a','ŋ'], o:['w','ɤ'],
+};
+
+/** one toneless pinyin syllable -> array of phonemes */
+function syllable(py){
+  py = py.toLowerCase().replace(/v/g, 'ü');
+  if (WHOLE[py]) return WHOLE[py].slice();
+
+  // after j/q/x, written u is really ü
+  for (const ini of ['zh','ch','sh','b','p','m','f','d','t','n','l','g','k','h','j','q','x','r','z','c','s']){
+    if (py.startsWith(ini)){
+      let fin = py.slice(ini.length);
+      if ('jqx'.includes(ini) && fin[0] === 'u') fin = 'ü' + fin.slice(1);
+      if (!FINALS[fin]) return null;
+      return INITIALS[ini].concat(FINALS[fin]);
+    }
+  }
+  return FINALS[py] ? FINALS[py].slice() : null;
+}
+
+/** a whole word (syllables separated by spaces) -> phonemes */
+function pronounce(pinyin){
+  const out = [];
+  for (const s of pinyin.split(/\s+/)){
+    const p = syllable(s);
+    if (!p) return null;
+    out.push(...p);
+  }
+  return out;
+}
+
+/* ---- the list, roughly in frequency order ------------------------------- */
+const WORDS = [
+  ['的','de','possessive / modifier particle'], ['一','yi','one'],
+  ['是','shi','to be'],            ['不','bu','not'],
+  ['了','le','completed action'],  ['人','ren','person'],
+  ['我','wo','I, me'],             ['在','zai','at, to be at'],
+  ['有','you','to have'],          ['他','ta','he, him'],
+  ['这','zhe','this'],             ['中','zhong','middle, China'],
+  ['大','da','big'],               ['来','lai','to come'],
+  ['上','shang','above, on'],      ['国','guo','country'],
+  ['个','ge','general classifier'],['到','dao','to arrive'],
+  ['说','shuo','to say'],          ['们','men','plural marker'],
+  ['为','wei','for, to be'],       ['子','zi','child, noun suffix'],
+  ['和','he','and'],               ['你','ni','you'],
+  ['地','di','ground, adverb marker'], ['出','chu','to go out'],
+  ['道','dao','way, to say'],      ['也','ye','also'],
+  ['时','shi','time'],             ['年','nian','year'],
+  ['得','de','to obtain'],         ['就','jiu','then, at once'],
+  ['那','na','that'],              ['要','yao','to want'],
+  ['下','xia','below, to descend'],['以','yi','by means of'],
+  ['生','sheng','to be born, life'],['会','hui','can, meeting'],
+  ['自','zi','self'],              ['着','zhe','ongoing action'],
+  ['去','qu','to go'],             ['之','zhi','classical possessive'],
+  ['过','guo','to pass, experienced'], ['家','jia','home, family'],
+  ['学','xue','to study'],         ['对','dui','correct, toward'],
+  ['可','ke','may, able'],         ['她','ta','she, her'],
+  ['里','li','inside'],            ['后','hou','after, behind'],
+  ['小','xiao','small'],           ['么','me','question suffix'],
+  ['心','xin','heart, mind'],      ['多','duo','many'],
+  ['天','tian','day, sky'],        ['而','er','and, but'],
+  ['能','neng','able to'],         ['好','hao','good'],
+  ['都','dou','all'],              ['然','ran','thus'],
+  ['没','mei','not have'],         ['日','ri','day, sun'],
+  ['于','yu','at, in'],            ['起','qi','to rise'],
+  ['还','hai','still, also'],      ['发','fa','to send out'],
+  ['成','cheng','to become'],      ['事','shi','matter, affair'],
+  ['只','zhi','only'],             ['作','zuo','to do, make'],
+  ['当','dang','when, to serve as'],['想','xiang','to think, want'],
+  ['看','kan','to look'],          ['文','wen','writing, culture'],
+  ['无','wu','without'],           ['开','kai','to open'],
+  ['手','shou','hand'],            ['十','shi','ten'],
+  ['用','yong','to use'],          ['主','zhu','main, master'],
+  ['行','xing','to walk, all right'], ['方','fang','direction, square'],
+  ['又','you','again'],            ['如','ru','if, like'],
+  ['前','qian','front, before'],   ['所','suo','place, nominaliser'],
+  ['本','ben','root, volume'],     ['见','jian','to see'],
+  ['经','jing','to pass through'], ['头','tou','head'],
+  ['面','mian','face, surface'],   ['公','gong','public'],
+  ['同','tong','same'],            ['三','san','three'],
+  ['已','yi','already'],           ['老','lao','old'],
+  ['从','cong','from'],            ['动','dong','to move'],
+  ['两','liang','two, a couple'],  ['长','chang','long'],
+  ['知','zhi','to know'],          ['民','min','people'],
+  ['样','yang','manner, kind'],    ['现','xian','now, to appear'],
+  ['分','fen','to divide, minute'],['好像','hao xiang','to seem like'],
+];
+
+const LIST = [];
+WORDS.forEach(([hanzi, pinyin, gloss], i) => {
+  const phonemes = pronounce(pinyin);
+  if (!phonemes) { console.warn('unparsed pinyin:', pinyin); return; }
+  LIST.push({ rank: i + 1, hanzi, pinyin, gloss, phonemes });
+});
+
+root.MandarinWords = { LIST, pronounce, syllable, INITIALS, FINALS, WHOLE };
+
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+</script>
+
+<script>
+(function(){
+'use strict';
+const E = window.BridgeEngine;
+const app = document.getElementById('app');
+const esc = s => String(s).replace(/[&<>"]/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+/* ======================================================================
+   IMAGE NAMING — the only block to edit when the real artwork lands.
+
+   Two sets, as separate folders:
+
+     Place Images/<Place>.png     Bilabial, Labiodental, Dental, Alveolar,
+                                  Postalveolar, Retroflex, Alveolopalatal,
+                                  Palatal, Velar, Uvular, Pharyngeal, Glottal
+     Manner Images/<Manner>.png   Plosive, Affricate, Fricative, Approximant,
+                                  Tap, Trill, Nasal
+                                  + Lateral-approximant, Lateral-fricative,
+                                    Lateral-tap
+
+   Note RETROFLEX gets its own place file even though the engine models it
+   as post-alveolar + apical. That is deliberate: it is a different picture,
+   and it matches the filenames already in the repo.
+
+   Vowels have no place or manner, so they use a third set:
+
+     Vowel Images/<Height>-<Backness>.png   e.g. Close-front.png
+     Vowel Images/Lips-rounded.png / Lips-spread.png
+
+   Any file that is missing renders as a labelled placeholder showing the
+   exact path it wanted. Drop the file in and it appears; nothing to change.
+   ====================================================================== */
+// Recordings for the listening stage. Several tokens per sound, ideally from
+// different speakers, so the learner trains on the contrast and not on a voice.
+const AUDIO = { dir: 'Sound Recordings/', ext: '.mp3' };
+
+// Frequency-ordered word lists, by target language. Add a language by adding
+// a list here; the scheduler needs nothing else.
+const WORDLISTS = { mandarin: (window.MandarinWords || {}).LIST };
+
+const IMG = {
+  place:  { dir: 'Place Images/',  ext: '.png' },
+  manner: { dir: 'Manner Images/', ext: '.png' },
+  vowel:  { dir: 'Vowel Images/',  ext: '.png' },
+};
+
+function placeName(s){
+  if (s.place === 'postalveolar')
+    return s.articulator === 'apical' ? 'Retroflex' : 'Postalveolar';
+  return cap(s.place);
+}
+function mannerName(s){
+  return s.lateral ? 'Lateral-' + s.manner : cap(s.manner);
+}
+
+/** the two panels for one sound: [{heading, file, caption, note}, ...] */
+// Which features each panel can actually depict. Anything not listed here —
+// voicing, aspiration, length — is invisible in a still image of the mouth,
+// and the learner needs to be told that rather than left to squint for it.
+const PANEL_DIMS_C = [['place','articulator'], ['manner','lateral']];
+const PANEL_DIMS_V = [['height','backness'], ['round']];
+
+function panelsFor(sym){
+  const s = E.SYMBOLS[sym];
+  if (s.kind === 'V'){
+    return [
+      { heading: 'Tongue position',
+        file: IMG.vowel.dir + cap(s.height) + '-' + cap(s.backness) + IMG.vowel.ext,
+        caption: cap(s.height) + ', ' + s.backness,
+        note: 'How high the tongue sits, and how far forward.' },
+      { heading: 'Lip shape',
+        file: IMG.vowel.dir + (s.round ? 'Lips-rounded' : 'Lips-spread') + IMG.vowel.ext,
+        caption: s.round ? 'Rounded' : 'Spread',
+        note: s.round ? 'Lips pushed forward into a circle.'
+                      : 'Lip corners drawn back, no rounding.' },
+    ];
+  }
+  return [
+    { heading: 'Place',
+      file: IMG.place.dir + placeName(s) + IMG.place.ext,
+      caption: placeName(s),
+      note: 'Where in the mouth the constriction is, and which part of the '
+          + 'tongue makes it — ' + E.ARTIC_WORD(s.articulator) + '.' },
+    { heading: 'Manner',
+      file: IMG.manner.dir + mannerName(s) + IMG.manner.ext,
+      caption: mannerName(s).replace('-', ' '),
+      note: 'What kind of obstruction it is'
+          + (s.lateral ? ', with the air routed over the sides of the tongue' : '')
+          + (s.voiced ? '. Voiced.' : '. Voiceless.') },
+  ];
+}
+
+/** changed panels at full size; anything identical on both sides collapses */
+function renderPanels(panels, differs, anyDiff, unseen, b){
+  const changed = panels.filter((_, i) => differs[i]);
+  const same    = panels.filter((_, i) => !differs[i]);
+  const out = [];
+
+  if (changed.length){
+    out.push(`<div class="panes"${changed.length === 1
+      ? ' style="grid-template-columns:minmax(0,440px)"' : ''}>${
+      changed.map(paneHTML).join('')}</div>`);
+  }
+
+  if (!anyDiff && !unseen.length){
+    // a zero-step bridge: the learner already produces this exact articulation,
+    // it just isn't a separate sound in their language
+    out.push(`<div class="invisible"><b>Nothing changes.</b> This is the same articulation you
+      already make &mdash; it simply isn't a separate sound in your language, so you have never
+      had to produce it on purpose. Both diagrams are the ones you are already using.</div>`);
+  }
+
+  if (unseen.length){
+    const names = unseen.map(d => (E.DIM_LABEL[d] || d).toLowerCase());
+    const list = names.length > 1
+      ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] : names[0];
+    // Lip posture is genuinely visible — there just isn't a lips panel for
+    // consonants. Don't tell the learner to feel for something they could see.
+    const lipsOnly = unseen.every(d => d === 'labialised' || d === 'round');
+    const why = lipsOnly
+      ? 'and no diagram here shows the lips &mdash; use a mirror for this one'
+      : 'and no picture can show it &mdash; it happens where you cannot see. '
+        + 'Catch that one by feel at the check stage';
+    out.push(anyDiff
+      ? `<div class="invisible">The <b>${esc(list)}</b> also changes, ${why}.</div>`
+      : `<div class="invisible"><b>Neither diagram changes.</b> The only thing that differs is the
+         <b>${esc(list)}</b>, ${why}.</div>`);
+  }
+
+  if (same.length){
+    out.push(same.map(p => `
+      <div class="same">
+        <div class="thumb">
+          <img src="${esc(p.file.split('/').map(encodeURIComponent).join('/'))}" alt=""
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <div class="missing" style="display:none"><div class="icon">&#9633;</div></div>
+        </div>
+        <div class="txt"><span class="lbl">${esc(p.heading)} &mdash; unchanged</span>
+          <b>${esc(p.caption)}</b>${anyDiff
+            ? ' &mdash; the same on both sides of this bridge, so it is not what you are changing.'
+            : ''}</div>
+      </div>`).join(''));
+  }
+  return out.join('');
+}
+
+function paneHTML(p){
+  const enc = p.file.split('/').map(encodeURIComponent).join('/');
+  return `
+    <div class="pane">
+      <p class="ph">${esc(p.heading)}</p>
+      <div class="frame">
+        <img src="${esc(enc)}" alt="${esc(p.heading + ': ' + p.caption)}"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <div class="missing" style="display:none">
+          <div class="icon">&#9633;</div>
+          <div class="what">${esc(p.caption)}</div>
+          <div class="path">${esc(p.file)}</div>
+        </div>
+      </div>
+      <p class="cap">${esc(p.caption)}<small>${esc(p.note)}</small></p>
+    </div>`;
+}
+
+/* ======================================================================
+   State — kept in the URL hash so Back works and a sound is linkable.
+   #/<l1>/<l2>            list
+   #/<l1>/<l2>/<sound>/a  the anchor
+   #/<l1>/<l2>/<sound>/b  the target
+   ====================================================================== */
+const DEFAULTS = { l1: ['english-ga'], l2: 'mandarin' };
+const STAGES = ['a','b','c','d'];
+
+/* Which self-checks the learner has ticked, per sound. Held in memory only —
+   this is a claim about their own mouth, so it should not silently persist
+   across sessions as if it were still true. */
+const TICKS = {};
+function ticksFor(st){
+  const k = st.l1.join(',') + '|' + st.l2 + '|' + st.sound;
+  return TICKS[k] || (TICKS[k] = new Set());
+}
+
+function readHash(){
+  const p = decodeURIComponent(location.hash.replace(/^#\/?/, '')).split('/');
+  // p[0] undefined = no hash at all (use the default); p[0] === '' = the user
+  // deselected everything, which must stay empty so the prompt shows
+  const l1 = p[0] === undefined ? DEFAULTS.l1
+           : p[0].split(',').filter(c => E.LANGUAGES[c]);
+  return {
+    l1,
+    l2: E.LANGUAGES[p[1]] ? p[1] : DEFAULTS.l2,
+    view: p[2] === '!course' ? 'course' : 'sounds',
+    sound: (p[2] && p[2] !== '!course') ? p[2] : null,
+    stage: STAGES.includes(p[3]) ? p[3] : 'a',
+  };
+}
+function go(st){
+  const l1 = (Array.isArray(st.l1) ? st.l1 : [st.l1]).map(encodeURIComponent).join(',');
+  const bits = [l1, encodeURIComponent(st.l2)];
+  if (st.sound) bits.push(encodeURIComponent(st.sound), st.stage || 'a');
+  else if (st.view === 'course') bits.push('!course');
+  location.hash = '#/' + bits.join('/');
+  // hashchange is queued, not synchronous, so paint now and let the event
+  // that follows no-op via the painted guard in route()
+  route();
+}
+
+/* ======================================================================
+   Screen 1 — pick the languages, pick a sound
+   ====================================================================== */
+function renderList(st){
+  const r = E.plan(st.l1, st.l2);
+  const codes = Object.keys(E.LANGUAGES)
+    .sort((a,b) => E.LANGUAGES[a].name.localeCompare(E.LANGUAGES[b].name));
+  const opts = sel => codes.map(c =>
+    `<option value="${c}"${c === sel ? ' selected' : ''}>${esc(E.LANGUAGES[c].name)}</option>`).join('');
+
+  const merged = Object.entries(r.collisions);
+  const P = [];
+
+  P.push(`<header>
+    <p class="kicker">Pronunciation routing</p>
+    <h1>The Bridge<em>.</em></h1>
+    <p class="lede">You don't learn a foreign sound from nothing. You learn it from a sound you
+    <b>already own</b>, by changing one thing about it. Pick two languages, then pick a sound to
+    see the two articulations side by side.</p>
+  </header>
+
+  <div class="picker" style="display:block">
+    <div class="field" style="margin-bottom:26px">
+      <label>Languages you already speak &mdash; pick as many as apply</label>
+      <div class="langchips">${codes.map(c =>
+        `<button class="lang" data-code="${c}" aria-pressed="${st.l1.includes(c)}"
+          >${esc(E.LANGUAGES[c].name)}</button>`).join('')}</div>
+      <p class="hint">Every sound from every language you pick counts as one you
+      already own, and any of them can be the starting point.</p>
+    </div>
+    <div class="field" style="max-width:380px">
+      <label for="l2">Language you're learning</label>
+      <select id="l2">${opts(st.l2)}</select>
+    </div>
+  </div>`);
+
+  const haveWords = WORDLISTS[st.l2];
+  P.push(`<div class="modes">
+    <button class="mode" data-view="sounds" aria-pressed="${st.view !== 'course'}"
+      >Sound list</button>
+    <button class="mode" data-view="course" aria-pressed="${st.view === 'course'}"
+      ${haveWords ? '' : 'disabled'}
+      title="${haveWords ? 'Frequency-ordered words, sounds taught on demand'
+                         : 'No word list for this language yet'}">Course${
+      haveWords ? '' : ' &mdash; no word list yet'}</button>
+  </div>`);
+
+  if (!st.l1.length){
+    P.push(`<h2>Pick at least one</h2>
+      <p class="sub">Choose a language you already speak.</p>`);
+    app.innerHTML = P.join(''); wirePickers(st); return;
+  }
+
+  if (st.view === 'course' && haveWords){
+    renderCourse(st, r, P);
+    return;
+  }
+
+  P.push(`<div class="tally">
+    <div><div class="n">${r.alreadyHave.length}</div><div class="k">already owned</div></div>
+    <div><div class="n">${r.bridges.length}</div><div class="k">to build</div></div>
+    <div><div class="n${merged.length ? ' warn' : ''}">${merged.length}</div>
+      <div class="k">merger risks</div></div>
+  </div>`);
+
+  P.push(`<h2>Sounds to build</h2>
+    <p class="sub">Every sound in ${esc(r.l2Name)} that isn't already in ${esc(r.l1Name)}, with the
+    closest thing you can already say. Easiest first. The tag says what kind of change it is; a
+    dashed tag means more than one thing changes at once. Pick one to walk through it.</p>`);
+
+  if (!r.bridges.length){
+    P.push(`<p class="sub">Nothing to build — every sound in the target is already yours.</p>`);
+  } else {
+    P.push(r.bridges.map(b => `
+      <button class="pick" data-sound="${esc(b.target)}">
+        <span class="g">${esc(b.target)}</span>
+        <span>
+          <span class="nm">${esc(b.target)}<span class="tag k-${esc(b.primary)}${
+            b.compound ? ' multi' : ''}">${esc(b.kindLabel)}</span>
+            <small>${esc(b.targetName)}</small></span>
+          <span class="from">start from <b>${esc(b.anchor)}</b> &nbsp;${esc(b.anchorName)}${
+            b.anchorKind === 'allophone'
+              ? ' &mdash; you already say this, just never on purpose' : ''}</span>
+          ${st.l1.length > 1 && b.anchorLangs.length
+            ? `<span class="src">from your ${b.anchorLangs.map(c =>
+                esc(E.LANGUAGES[c].name)).join(' and ')}</span>` : ''}
+        </span>
+        <span class="chev">&rarr;</span>
+      </button>`).join(''));
+  }
+
+  if (merged.length){
+    merged.sort((a,b) => b[1].length - a[1].length);
+    P.push(`<h2>Merger risk</h2>
+      <p class="sub">These start from the same sound, so that's where they'll collapse into each
+      other. Teach them against one another, not separately.</p>`);
+    for (const [anchor, bs] of merged)
+      P.push(`<div class="merge">
+        <div class="h">from <span class="a">${esc(anchor)}</span> &mdash; ${
+          bs.map(b => esc(b.target)).join(' vs ')}</div>
+        <ul>${bs.map(b => `<li><b>${esc(b.target)}</b>${
+          esc(b.steps.length ? b.steps[0].do : 'no change needed')}</li>`).join('')}</ul>
+      </div>`);
+  }
+
+  P.push(`<details><summary>Already owned (${r.alreadyHave.length})</summary>
+    <div class="chips">${r.alreadyHave.map(s =>
+      `<span class="chip own" title="${esc(E.NAMES[s]||'')}">${esc(s)}</span>`).join('')}</div>
+  </details>`);
+  P.push(`<details><summary>Not needed (${r.surplus.length})</summary>
+    <p class="sub">In ${esc(r.l1Name)} but absent from ${esc(r.l2Name)} &mdash; habits to suppress
+    rather than skills to build.</p>
+    <div class="chips">${r.surplus.map(s =>
+      `<span class="chip" title="${esc(E.NAMES[s]||'')}">${esc(s)}</span>`).join('')}</div>
+  </details>`);
+
+  P.push(footerHTML());
+  app.innerHTML = P.join('');
+
+  wirePickers(st);
+  app.querySelectorAll('.pick').forEach(el => {
+    el.addEventListener('click', () =>
+      go({ l1: st.l1, l2: st.l2, sound: el.dataset.sound, stage: 'a' }));
+  });
+}
+
+function renderCourse(st, r, P){
+  const words = WORDLISTS[st.l2];
+  const c = E.curriculum(st.l1, st.l2, words);
+
+  P.push(`<div class="tally">
+    <div><div class="n">${c.totalWords}</div><div class="k">words</div></div>
+    <div><div class="n">${c.freeWords}</div><div class="k">need nothing new</div></div>
+    <div><div class="n warn">${c.soundsTaught}</div><div class="k">sounds taught</div></div>
+  </div>`);
+
+  P.push(`<h2>The course</h2>
+    <p class="sub">Most common words first. Most of them need nothing you can't already say, so
+    they just get taught. When a word needs a sound you don't have, that sound is taught first
+    &mdash; and only then. ${c.soundsTaught} interruptions across ${c.totalWords} words.
+    Anchors update as you go: a sound learned early becomes the starting point for one learned
+    later.</p>`);
+
+  P.push(c.lessons.map(l => {
+    if (l.type === 'word'){
+      const w = l.word;
+      return `<div class="wordrow">
+        <span class="r">${w.rank}</span>
+        <span class="h">${esc(w.hanzi)}</span>
+        <span><span class="p">${esc(w.pinyin)}</span>
+          <span class="ipa2"> /${esc(w.phonemes.join(' '))}/</span>
+          <span class="gl"> &nbsp;${esc(w.gloss)}</span></span>
+      </div>`;
+    }
+    const b = l.bridge;
+    if (!b) return `<div class="lesson" style="border-color:var(--line)">
+      <div><div class="lt">No route to this sound</div>
+      <span class="lg">${esc(l.target)}</span>
+      <div class="ld">needed for ${esc(l.forWord.hanzi)} ${esc(l.forWord.pinyin)}</div></div></div>`;
+    return `<button class="lesson" data-sound="${esc(b.target)}">
+      <div>
+        <div class="lt">New sound &mdash; needed for ${esc(l.forWord.hanzi)} ${esc(l.forWord.pinyin)}</div>
+        <span class="lg">${esc(b.target)}</span>
+        <span style="font-family:'Fraunces';font-size:17px">${esc(b.targetName)}</span>
+        <span class="tag k-${esc(b.primary)}${b.compound ? ' multi' : ''}">${esc(b.kindLabel)}</span>
+        <div class="ld">start from <b>${esc(b.anchor)}</b> &nbsp;${esc(b.anchorName)}${
+          b.anchorLangs.includes('acquired')
+            ? ' &mdash; which you learned earlier in this course' : ''}</div>
+      </div>
+      <span class="chev" style="color:var(--faint);font-family:Fraunces">&rarr;</span>
+    </button>`;
+  }).join(''));
+
+  P.push(footerHTML());
+  app.innerHTML = P.join('');
+  wirePickers(st);
+  document.querySelectorAll('.lesson[data-sound]').forEach(el =>
+    el.addEventListener('click', () =>
+      go({ l1: st.l1, l2: st.l2, sound: el.dataset.sound, stage: 'a' })));
+}
+
+function wirePickers(st){
+  const l2 = document.getElementById('l2');
+  if (l2) l2.addEventListener('change', () => go({ l1: st.l1, l2: l2.value, view: st.view }));
+  document.querySelectorAll('.mode[data-view]').forEach(el => {
+    if (el.disabled) return;
+    el.addEventListener('click', () =>
+      go({ l1: st.l1, l2: st.l2, view: el.dataset.view }));
+  });
+  document.querySelectorAll('.lang').forEach(el => {
+    el.addEventListener('click', () => {
+      const c = el.dataset.code;
+      const next = st.l1.includes(c) ? st.l1.filter(x => x !== c) : st.l1.concat(c);
+      go({ l1: next, l2: l2 ? l2.value : st.l2, view: st.view });
+    });
+  });
+}
+
+/* ======================================================================
+   Screen 2 — the anchor, then the target
+   ====================================================================== */
+function renderWalk(st){
+  const r = E.plan(st.l1, st.l2);
+  const b = r.bridges.find(x => x.target === st.sound);
+  if (!b){ go({ l1: st.l1, l2: st.l2 }); return; }
+
+  const onA = st.stage === 'a', onB = st.stage === 'b';
+  const onC = st.stage === 'c', onD = st.stage === 'd';
+  const sym = onA ? b.anchor : b.target;
+  const checks = E.checksFor(b);
+  // Which panels actually differ between anchor and target? Compare the
+  // resolved files rather than guessing from the feature names — voicing and
+  // aspiration change neither picture, and an articulator change swaps the
+  // PLACE file (postalveolar -> retroflex) without touching manner.
+  const pA = panelsFor(b.anchor), pB = panelsFor(b.target);
+  const differs = pA.map((p, i) => p.file !== pB[i].file);
+  const anyDiff = differs.some(Boolean);
+  // features that changed but which no panel can show
+  const panelDims = E.SYMBOLS[b.target].kind === 'C' ? PANEL_DIMS_C : PANEL_DIMS_V;
+  const shown = new Set();
+  panelDims.forEach((dims, i) => { if (differs[i]) dims.forEach(d => shown.add(d)); });
+  const unseen = b.kinds.filter(d => !shown.has(d));
+  const needed = checks.filter(c => c.reliable).map(c => c.dim);
+  const done = ticksFor(st);
+  const gateOpen = needed.every(d => done.has(d));
+  const P = [];
+
+  P.push(`<div class="crumb">
+    <button class="btn" id="back">&larr; All sounds</button>
+    <span>${esc(r.l1Name)} &rarr; ${esc(r.l2Name)}</span>
+    <span>&middot;</span>
+    <span>${esc(b.anchor)} &rarr; ${esc(b.target)}</span>
+  </div>
+
+  <div class="stagebar">${
+    ['The sound you have','The sound you want','Check yourself','Train your ear']
+      .map((label, i) => {
+        const here = STAGES.indexOf(st.stage);
+        return `<div class="${i === here ? 'on' : i < here ? 'done' : ''}">${
+          (i+1)} &middot; ${label}</div>`;
+      }).join('')}</div>
+
+  <div class="bighead">
+    <p class="role">${
+      onA ? 'You already say this' :
+      onB ? 'This is the target' :
+      onC ? 'Prove it with your body, not your ear' :
+            'Now train the ear'}</p>
+    <div class="g">${esc(sym)}</div>
+    <p class="nm"><b>${esc(E.NAMES[sym] || '')}</b>${
+      onA
+        ? (b.anchorKind === 'allophone'
+            ? ' &mdash; you produce this already, just never deliberately. Say it and hold it.'
+            : ' &mdash; a sound of ' + esc(r.l1Name) + '. Say it and hold it.')
+              + (anyDiff
+                  ? ' Watch the ' + pA.filter((_,i)=>differs[i]).map(p =>
+                      p.heading.toLowerCase()).join(' and ') + ' panel &mdash; that is the one that moves.'
+                  : '')
+      : onB ? ' &mdash; a sound of ' + esc(r.l2Name) + '. '
+              + (anyDiff
+                  ? (unseen.length ? 'The ' : 'Only the ')
+                    + pA.filter((_,i)=>differs[i]).map(p =>
+                        p.heading.toLowerCase()).join(' and ')
+                    + ' changes' + (unseen.length ? ', plus something you cannot see.' : '.')
+                  : '')
+      : onC ? ' &mdash; say it out loud, then run the tests below. None of them ask you to judge how it sounds.'
+            : ' &mdash; with the articulation in your body, the difference is something you now have a name for.'}</p>
+  </div>
+
+  ${(onA || onB) ? renderPanels(onA ? pA : pB, differs, anyDiff, unseen, b) : ''}`);
+
+  if (onB){
+    P.push(`<div class="change">
+      <div class="h">What changed <span class="tag k-${esc(b.primary)}${
+        b.compound ? ' multi' : ''}">${esc(b.kindLabel)}</span></div>
+      ${b.steps.length
+        ? `<ol>${b.steps.map(s => `<li>${esc(s.do)}</li>`).join('')}</ol>`
+        : `<p style="color:var(--dim);margin:0">Nothing. You already produce this sound &mdash;
+           it just isn't a separate letter in your language.</p>`}
+      <p class="g2">${esc(b.kindGloss)}</p>
+    </div>`);
+  }
+
+  if (onC){
+    P.push(`<p class="sub" style="margin-top:26px">One test per thing that changed. These are
+      physical, not acoustic &mdash; you can pass them without being able to hear the contrast yet,
+      which is the whole point of doing this before the listening.</p>`);
+
+    if (!checks.length){
+      P.push(`<p class="sub">Nothing changes for this sound, so there is nothing to check.
+        You already produce it.</p>`);
+    } else {
+      P.push(checks.map(c => `
+        <div class="check${c.reliable ? '' : ' unreliable'}">
+          <div>
+            <div class="t">${esc(c.title)}
+              <span class="tag k-${esc(c.dim)}">${esc(E.DIM_LABEL[c.dim] || c.dim)}</span></div>
+            <p class="how">${esc(c.how)}</p>
+            <p class="pass">${esc(c.pass)}</p>
+          </div>
+          ${c.reliable
+            ? `<button class="tick" data-dim="${esc(c.dim)}"
+                 aria-pressed="${done.has(c.dim)}">${done.has(c.dim) ? '&#10003; Passed' : 'I did this'}</button>`
+            : `<button class="tick" disabled>No test</button>`}
+        </div>`).join(''));
+    }
+
+    P.push(gateOpen
+      ? `<p class="gate">All checks passed. Now your ear has something to look for.</p>`
+      : `<p class="gate">Work through the checks above to unlock the listening stage. This gate
+         exists so you don't train your ear against your own wrong articulation.</p>`);
+  }
+
+  if (onD){
+    P.push(`<p class="sub" style="margin-top:26px">Forced choice between
+      <b>${esc(b.anchor)}</b> and <b>${esc(b.target)}</b>, repeated. You just felt the difference;
+      now find it in the sound. No replays of your own voice &mdash; you can't yet judge that
+      fairly, which is exactly why this comes last.</p>`);
+    P.push(`<div class="stub">
+      <h3>Needs recordings</h3>
+      <p>This stage plays real tokens and asks which one you heard. It needs audio that doesn't
+      exist yet, so here is the shape of it and the files it wants:</p>
+      <div class="choice">
+        <button disabled>${esc(b.anchor)}</button>
+        <button disabled>${esc(b.target)}</button>
+      </div>
+      <p class="path" style="margin-top:18px">${
+        [b.anchor, b.target].map(sym =>
+          [1,2,3].map(n => `${AUDIO.dir}${sym}-${n}${AUDIO.ext}`).join('<br>')).join('<br>')}</p>
+      <p style="color:var(--faint);font-size:14px;margin-top:14px">Several tokens per sound, ideally
+      from different speakers &mdash; one voice teaches the voice, not the contrast.</p>
+    </div>`);
+  }
+
+  P.push(`<div class="nav">
+    ${onA ? `<button class="btn primary" id="next">Now the sound you want &nbsp;${esc(b.target)} &rarr;</button>` : ''}
+    ${onB ? `<button class="btn" id="prev">&larr; Back to ${esc(b.anchor)}</button>
+             <button class="btn primary" id="next">Now try saying it &rarr;</button>` : ''}
+    ${onC ? `<button class="btn" id="prev">&larr; Back to the diagrams</button>
+             <button class="btn primary" id="next" ${gateOpen ? '' : 'disabled'}
+               >Train your ear &rarr;</button>` : ''}
+    ${onD ? `<button class="btn" id="prev">&larr; Back to the checks</button>` : ''}
+    <button class="btn${onD ? ' primary' : ''}" id="back2">Back to all sounds</button>
+  </div>`);
+
+  P.push(footerHTML());
+  app.innerHTML = P.join('');
+  window.scrollTo(0, 0);
+
+  const hop = stage => () => go({ l1: st.l1, l2: st.l2, sound: st.sound, stage });
+  const i = STAGES.indexOf(st.stage);
+  document.getElementById('back').onclick = () => go({ l1: st.l1, l2: st.l2 });
+  document.getElementById('back2').onclick = () => go({ l1: st.l1, l2: st.l2 });
+  const n = document.getElementById('next'); if (n) n.onclick = hop(STAGES[i+1]);
+  const p = document.getElementById('prev'); if (p) p.onclick = hop(STAGES[i-1]);
+
+  document.querySelectorAll('.tick[data-dim]').forEach(el => {
+    el.addEventListener('click', () => {
+      const set = ticksFor(st), dim = el.dataset.dim;
+      if (set.has(dim)) set.delete(dim); else set.add(dim);
+      painted = null;           // force a repaint of the same URL
+      route();
+    });
+  });
+}
+
+function footerHTML(){
+  return `<footer>
+    <p>Every sound is a bundle of features; two bundles are adjacent when exactly one feature
+    differs by one step. Finding the route from a sound you own to one you don't is a shortest
+    path over that graph, seeded with your whole native inventory at once &mdash; so the starting
+    sound is found, not assumed.</p>
+    <p>Diagrams load from <code>Place Images/</code>, <code>Manner Images/</code> and
+    <code>Vowel Images/</code>. A panel showing a filename means that file isn't there yet.</p>
+    <p>Broad transcription. Vowels are dialect-dependent, Russian palatalisation and English
+    diphthongs are simplified, and the step costs are judgement calls rather than fitted to
+    learner data. Phonemes only &mdash; no tone, no phonotactics.</p>
+  </footer>`;
+}
+
+/* ---------------------------------------------------------------------- */
+let painted = null;
+function route(){
+  if (location.hash === painted) return;   // already showing this state
+  painted = location.hash;
+  const st = readHash();
+  if (st.sound && st.l1.length) renderWalk(st); else renderList(st);
+}
+window.addEventListener('hashchange', route);
+if (!location.hash) go(DEFAULTS);
+route();
+})();
+</script>
+</body>
+</html>
