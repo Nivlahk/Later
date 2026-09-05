@@ -89,6 +89,7 @@
     width:100%;text-align:left;background:var(--ink2);color:inherit;font:inherit;
     border:1px solid var(--verm);border-left-width:3px;border-radius:12px;
     padding:16px 18px;margin:14px 0;transition:.14s;}
+  .lesson{cursor:pointer;}
   .lesson:hover{background:#241c14;}
   .lesson:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
   .lesson .lg{font-family:'Fraunces';font-size:30px;color:var(--gold);line-height:1;
@@ -122,6 +123,15 @@
   .pick .from b{font-family:'Fraunces';font-size:17px;color:var(--paper);font-weight:400;
     border-bottom:2px solid var(--verm);padding:0 2px;}
   .pick .chev{color:var(--faint);font-family:'Fraunces';font-size:20px;}
+  .pick{cursor:pointer;}
+  .rowend{display:flex;align-items:center;gap:14px;}
+  .playbtn{font-size:15px;line-height:1;color:var(--gold);background:none;
+    border:1px solid var(--line);border-radius:50%;width:42px;height:42px;
+    display:flex;align-items:center;justify-content:center;transition:.14s;flex:none;}
+  .playbtn:hover{border-color:var(--gold);background:rgba(203,163,83,.12);}
+  .playbtn:active{background:rgba(203,163,83,.25);}
+  .playbtn:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+  .playbtn.on{background:var(--gold);color:var(--ink);border-color:var(--gold);}
 
   .tag{display:inline-block;font-family:'Fraunces';font-size:11px;font-weight:500;
     letter-spacing:.14em;text-transform:uppercase;padding:3px 9px;border-radius:20px;
@@ -188,6 +198,21 @@
   .tick:focus-visible{outline:2px solid var(--gold);outline-offset:3px;}
   .tick[disabled]{opacity:.45;cursor:default;}
   .gate{color:var(--faint);font-size:15px;margin:20px 0 0;font-style:italic;}
+  .speak{cursor:pointer;border-bottom:1px dotted var(--faint);transition:.12s;
+    border-radius:3px;padding:0 1px;}
+  .speak:hover{color:var(--gold);border-bottom-color:var(--gold);
+    background:rgba(203,163,83,.10);}
+  .speak:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+  .speak.playing{color:var(--gold);background:rgba(203,163,83,.20);}
+  .audiohint{color:var(--faint);font-size:14px;margin:14px 0 0;}
+
+  .quizbox{background:var(--ink2);border:1px solid var(--line);border-radius:14px;
+    padding:22px 24px;margin:24px 0 0;max-width:620px;}
+  .quizbox .score{font-family:'Fraunces';font-size:13px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--faint);margin:0 0 16px;}
+  .verdict{margin:16px 0 0;font-size:16px;color:var(--dim);min-height:24px;}
+  .verdict b{font-family:'Fraunces';font-weight:500;}
+  .verdict b.ok{color:var(--gold);} .verdict b.no{color:var(--verm);}
   .stub{border:1px dashed var(--line);border-radius:14px;padding:26px;margin:26px 0 0;}
   .stub h3{font-family:'Fraunces';font-weight:400;font-size:20px;margin:0 0 10px;}
   .stub p{margin:0 0 12px;}
@@ -245,6 +270,8 @@
   footer{margin-top:56px;padding-top:22px;border-top:1px solid var(--line);
     color:var(--faint);font-size:13px;max-width:700px;}
   footer p{margin:0 0 9px;}
+  .audiohint code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;
+    color:var(--gold);}
   footer code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--dim);}
   @media (prefers-reduced-motion: reduce){*{transition:none!important;}}
 </style>
@@ -1443,7 +1470,84 @@ const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
    ====================================================================== */
 // Recordings for the listening stage. Several tokens per sound, ideally from
 // different speakers, so the learner trains on the contrast and not on a voice.
-const AUDIO = { dir: 'Sound Recordings/', ext: '.mp3' };
+const AUDIO = { dir: 'Sound Recordings/', exts: ['.ogg', '.mp3', '.wav'] };
+
+/* Recordings are optional. If Sound Recordings/manifest.json is there (written
+   by fetch-audio.mjs) we use it; if not we guess extensions; if nothing plays,
+   stage 4 stays a stub rather than pretending. */
+/* No manifest fetch. fetch() is blocked on file:// URLs, and requiring a local
+   web server just to discover which files exist was a worse tax than the odd
+   silent button. Instead: assume the conventional filenames, decorate every
+   symbol, and try the candidates in order when clicked. If a symbol has no
+   file, the click is a no-op and the page says why, once.
+
+   Sound Recordings/<ipa>-1.ogg   first speaker
+   Sound Recordings/<ipa>-2.ogg   second, if you have one
+   .mp3 and .wav are tried too.
+
+   manifest.json is still honoured if it happens to be reachable — it lets the
+   app know exactly how many speakers each sound has, which stage 4 cares
+   about — but nothing depends on it. */
+let MANIFEST = null;
+try {
+  if (typeof fetch === 'function' && location.protocol !== 'file:'){
+    fetch(AUDIO.dir + 'manifest.json')
+      .then(r => (r && r.ok) ? r.json() : null)
+      .then(m => { if (m){ MANIFEST = m; painted = null; route(); } })
+      .catch(() => {});
+  }
+} catch (e){ /* fine — the conventional names still work */ }
+
+let audioMissing = false;
+
+function clipsFor(sym){
+  if (MANIFEST && MANIFEST[sym]) return MANIFEST[sym].map(f => AUDIO.dir + f);
+  const out = [];
+  for (const n of [1, 2]) for (const e of AUDIO.exts) out.push(`${AUDIO.dir}${sym}-${n}${e}`);
+  return out;
+}
+/* Without a manifest we cannot know what exists, so we offer everything and
+   let the click find out. Better a button that turns out to be silent than a
+   feature nobody can see. */
+function haveAudio(sym){ return MANIFEST ? !!(MANIFEST[sym] || []).length : true; }
+function speakerCount(sym){ return MANIFEST ? (MANIFEST[sym] || []).length : 1; }
+
+/* Wrap an IPA symbol so it plays when clicked. Uses a span, not a button:
+   several of these sit inside clickable rows, and nested buttons are invalid. */
+function ipa(sym, cls){
+  const c = cls ? ' ' + cls : '';
+  if (!haveAudio(sym)) return `<span class="${c.trim()}">${esc(sym)}</span>`;
+  return `<span class="${('speak' + c).trim()}" data-ipa="${esc(sym)}" role="button"
+    tabindex="0" title="Hear ${esc(sym)}">${esc(sym)}</span>`;
+}
+
+/* Repeated clicks cycle speakers rather than replaying one voice. */
+const TURN = {};
+function speak(sym){
+  const n = Math.max(1, speakerCount(sym));
+  play(sym, (TURN[sym] = ((TURN[sym] || 0) + 1)) % n);
+}
+
+let audio = null;
+function play(sym, start){
+  try {
+    if (!audio) audio = new Audio();
+  } catch (e){ return; }
+  const all = clipsFor(sym);
+  const urls = start ? all.slice(start).concat(all.slice(0, start)) : all;
+  let i = 0;
+  const attempt = () => {
+    if (i >= urls.length){
+      if (!audioMissing){ audioMissing = true; painted = null; route(); }
+      return;
+    }
+    audio.src = encodeURI(urls[i++]);
+    const p = audio.play();
+    if (p && p.catch) p.catch(attempt);
+  };
+  audio.onerror = attempt;
+  attempt();
+}
 
 // Frequency-ordered word lists, by target language. Add a language by adding
 // a list here; the scheduler needs nothing else.
@@ -1586,6 +1690,12 @@ const STAGES = ['a','b','c','d'];
    this is a claim about their own mouth, so it should not silently persist
    across sessions as if it were still true. */
 const TICKS = {};
+/* Ear-test state, in memory only — same reasoning as the ticks. */
+const EAR = {};
+function earScore(st){
+  const k = st.l1.join(',') + '|' + st.l2 + '|' + st.sound;
+  return EAR[k] || (EAR[k] = { asked:0, right:0, cur:null, verdict:'' });
+}
 function ticksFor(st){
   const k = st.l1.join(',') + '|' + st.l2 + '|' + st.sound;
   return TICKS[k] || (TICKS[k] = new Set());
@@ -1685,26 +1795,40 @@ function renderList(st){
     <p class="sub">Every sound in ${esc(r.l2Name)} that isn't already in ${esc(r.l1Name)}, with the
     closest thing you can already say. Easiest first. The tag says what kind of change it is; a
     dashed tag means more than one thing changes at once. Pick one to walk through it.</p>`);
+  P.push(audioMissing
+    ? `<p class="audiohint">That sound has no recording yet. Put files at
+       <code>Sound Recordings/&lt;symbol&gt;-1.ogg</code>, or run
+       <code>node fetch-audio.mjs</code> to fetch them from Wikimedia Commons.</p>`
+    : `<p class="audiohint">The round button plays the pair &mdash; anchor, then target. Any
+       underlined symbol plays on its own, and clicking it again gives you another speaker
+       where there is more than one.</p>`);
 
   if (!r.bridges.length){
     P.push(`<p class="sub">Nothing to build — every sound in the target is already yours.</p>`);
   } else {
     P.push(r.bridges.map(b => `
-      <button class="pick" data-sound="${esc(b.target)}">
-        <span class="g">${esc(b.target)}</span>
+      <div class="pick" data-sound="${esc(b.target)}" role="button" tabindex="0">
+        <span class="g">${ipa(b.target)}</span>
         <span>
-          <span class="nm">${esc(b.target)}<span class="tag k-${esc(b.primary)}${
+          <span class="nm">${ipa(b.target)}<span class="tag k-${esc(b.primary)}${
             b.compound ? ' multi' : ''}">${esc(b.kindLabel)}</span>
             <small>${esc(b.targetName)}</small></span>
-          <span class="from">start from <b>${esc(b.anchor)}</b> &nbsp;${esc(b.anchorName)}${
+          <span class="from">start from <b>${ipa(b.anchor)}</b> &nbsp;${esc(b.anchorName)}${
             b.anchorKind === 'allophone'
               ? ' &mdash; you already say this, just never on purpose' : ''}</span>
           ${st.l1.length > 1 && b.anchorLangs.length
             ? `<span class="src">from your ${b.anchorLangs.map(c =>
                 esc(E.LANGUAGES[c].name)).join(' and ')}</span>` : ''}
         </span>
-        <span class="chev">&rarr;</span>
-      </button>`).join(''));
+        <span class="rowend">
+          ${haveAudio(b.anchor) || haveAudio(b.target)
+            ? `<button class="playbtn" data-play="${esc(b.target)}"
+                 data-also="${esc(b.anchor)}" title="Hear ${esc(b.anchor)} then ${esc(b.target)}"
+                 aria-label="Hear ${esc(b.anchor)} then ${esc(b.target)}">&#9654;</button>`
+            : ''}
+          <span class="chev">&rarr;</span>
+        </span>
+      </div>`).join(''));
   }
 
   if (merged.length){
@@ -1714,22 +1838,22 @@ function renderList(st){
       other. Teach them against one another, not separately.</p>`);
     for (const [anchor, bs] of merged)
       P.push(`<div class="merge">
-        <div class="h">from <span class="a">${esc(anchor)}</span> &mdash; ${
-          bs.map(b => esc(b.target)).join(' vs ')}</div>
-        <ul>${bs.map(b => `<li><b>${esc(b.target)}</b>${
+        <div class="h">from <span class="a">${ipa(anchor)}</span> &mdash; ${
+          bs.map(b => ipa(b.target)).join(' vs ')}</div>
+        <ul>${bs.map(b => `<li><b>${ipa(b.target)}</b>${
           esc(b.steps.length ? b.steps[0].do : 'no change needed')}</li>`).join('')}</ul>
       </div>`);
   }
 
   P.push(`<details><summary>Already owned (${r.alreadyHave.length})</summary>
     <div class="chips">${r.alreadyHave.map(s =>
-      `<span class="chip own" title="${esc(E.NAMES[s]||'')}">${esc(s)}</span>`).join('')}</div>
+      `<span class="chip own">${ipa(s)}</span>`).join('')}</div>
   </details>`);
   P.push(`<details><summary>Not needed (${r.surplus.length})</summary>
     <p class="sub">In ${esc(r.l1Name)} but absent from ${esc(r.l2Name)} &mdash; habits to suppress
     rather than skills to build.</p>
     <div class="chips">${r.surplus.map(s =>
-      `<span class="chip" title="${esc(E.NAMES[s]||'')}">${esc(s)}</span>`).join('')}</div>
+      `<span class="chip">${ipa(s)}</span>`).join('')}</div>
   </details>`);
 
   P.push(footerHTML());
@@ -1737,8 +1861,23 @@ function renderList(st){
 
   wirePickers(st);
   app.querySelectorAll('.pick').forEach(el => {
-    el.addEventListener('click', () =>
-      go({ l1: st.l1, l2: st.l2, sound: el.dataset.sound, stage: 'a' }));
+    const open = () => go({ l1: st.l1, l2: st.l2, sound: el.dataset.sound, stage: 'a' });
+    el.addEventListener('click', e => { if (!e.target.closest('[data-play],[data-ipa]')) open(); });
+    el.addEventListener('keydown', e => {
+      if ((e.key === 'Enter' || e.key === ' ') && e.target === el){ e.preventDefault(); open(); }
+    });
+  });
+
+  // hear the pair: anchor, short gap, target — the contrast, not one sound
+  app.querySelectorAll('[data-play]').forEach(el => {
+    el.addEventListener('click', e => {
+      e.preventDefault(); e.stopPropagation();
+      const a = el.dataset.also, b2 = el.dataset.play;
+      el.classList.add('on');
+      if (haveAudio(a)) speak(a);
+      setTimeout(() => { if (haveAudio(b2)) speak(b2); }, 850);
+      setTimeout(() => el.classList.remove('on'), 1500);
+    });
   });
 }
 
@@ -1766,35 +1905,69 @@ function renderCourse(st, r, P){
         <span class="r">${w.rank}</span>
         <span class="h">${esc(w.hanzi)}</span>
         <span><span class="p">${esc(w.pinyin)}</span>
-          <span class="ipa2"> /${esc(w.phonemes.join(' '))}/</span>
+          <span class="ipa2"> /${w.phonemes.map(p => ipa(p)).join(' ')}/</span>
           <span class="gl"> &nbsp;${esc(w.gloss)}</span></span>
       </div>`;
     }
     const b = l.bridge;
     if (!b) return `<div class="lesson" style="border-color:var(--line)">
       <div><div class="lt">No route to this sound</div>
-      <span class="lg">${esc(l.target)}</span>
+      <span class="lg">${ipa(l.target)}</span>
       <div class="ld">needed for ${esc(l.forWord.hanzi)} ${esc(l.forWord.pinyin)}</div></div></div>`;
-    return `<button class="lesson" data-sound="${esc(b.target)}">
+    return `<div class="lesson" data-sound="${esc(b.target)}" role="button" tabindex="0">
       <div>
         <div class="lt">New sound &mdash; needed for ${esc(l.forWord.hanzi)} ${esc(l.forWord.pinyin)}</div>
-        <span class="lg">${esc(b.target)}</span>
+        <span class="lg">${ipa(b.target)}</span>
         <span style="font-family:'Fraunces';font-size:17px">${esc(b.targetName)}</span>
         <span class="tag k-${esc(b.primary)}${b.compound ? ' multi' : ''}">${esc(b.kindLabel)}</span>
-        <div class="ld">start from <b>${esc(b.anchor)}</b> &nbsp;${esc(b.anchorName)}${
+        <div class="ld">start from <b>${ipa(b.anchor)}</b> &nbsp;${esc(b.anchorName)}${
           b.anchorLangs.includes('acquired')
             ? ' &mdash; which you learned earlier in this course' : ''}</div>
       </div>
-      <span class="chev" style="color:var(--faint);font-family:Fraunces">&rarr;</span>
-    </button>`;
+      <span class="rowend">
+        ${haveAudio(b.anchor) || haveAudio(b.target)
+          ? `<button class="playbtn" data-play="${esc(b.target)}" data-also="${esc(b.anchor)}"
+               aria-label="Hear ${esc(b.anchor)} then ${esc(b.target)}">&#9654;</button>` : ''}
+        <span class="chev" style="color:var(--faint);font-family:Fraunces">&rarr;</span>
+      </span>
+    </div>`;
   }).join(''));
 
   P.push(footerHTML());
   app.innerHTML = P.join('');
   wirePickers(st);
-  document.querySelectorAll('.lesson[data-sound]').forEach(el =>
-    el.addEventListener('click', () =>
-      go({ l1: st.l1, l2: st.l2, sound: el.dataset.sound, stage: 'a' })));
+  document.querySelectorAll('.lesson[data-sound]').forEach(el => {
+    const open = () => go({ l1: st.l1, l2: st.l2, sound: el.dataset.sound, stage: 'a' });
+    el.addEventListener('click', e => { if (!e.target.closest('[data-play],[data-ipa]')) open(); });
+    el.addEventListener('keydown', e => {
+      if ((e.key === 'Enter' || e.key === ' ') && e.target === el){ e.preventDefault(); open(); }
+    });
+  });
+  document.querySelectorAll('.lesson [data-play]').forEach(el => {
+    el.addEventListener('click', e => {
+      e.preventDefault(); e.stopPropagation();
+      el.classList.add('on');
+      if (haveAudio(el.dataset.also)) speak(el.dataset.also);
+      setTimeout(() => { if (haveAudio(el.dataset.play)) speak(el.dataset.play); }, 850);
+      setTimeout(() => el.classList.remove('on'), 1500);
+    });
+  });
+}
+
+function wireSpeak(){
+  document.querySelectorAll('[data-ipa]').forEach(el => {
+    const go2 = e => {
+      e.preventDefault();
+      e.stopPropagation();          // these sit inside clickable rows
+      speak(el.dataset.ipa);
+      el.classList.add('playing');
+      setTimeout(() => el.classList.remove('playing'), 450);
+    };
+    el.addEventListener('click', go2);
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') go2(e);
+    });
+  });
 }
 
 function wirePickers(st){
@@ -1864,7 +2037,10 @@ function renderWalk(st){
       onB ? 'This is the target' :
       onC ? 'Prove it with your body, not your ear' :
             'Now train the ear'}</p>
-    <div class="g">${esc(sym)}</div>
+    <div class="g">${ipa(sym)}${haveAudio(sym)
+      ? ` <button class="playbtn" data-play="${esc(sym)}" data-also="${esc(sym)}"
+            style="width:54px;height:54px;font-size:19px;vertical-align:18px"
+            aria-label="Hear ${esc(sym)}">&#9654;</button>` : ''}</div>
     <p class="nm"><b>${esc(E.NAMES[sym] || '')}</b>${
       onA
         ? (b.anchorKind === 'allophone'
@@ -1934,6 +2110,19 @@ function renderWalk(st){
       <b>${esc(b.anchor)}</b> and <b>${esc(b.target)}</b>, repeated. You just felt the difference;
       now find it in the sound. No replays of your own voice &mdash; you can't yet judge that
       fairly, which is exactly why this comes last.</p>`);
+
+    if (haveAudio(b.anchor) && haveAudio(b.target)){
+      const sc = earScore(st);
+      P.push(`<div class="quizbox">
+        <p class="score">${sc.right} / ${sc.asked} correct</p>
+        <div class="btnrow" style="margin-top:0">
+          <button class="btn primary" id="qPlay">${sc.cur ? 'Play again' : 'Play a sound'}</button>
+          <button class="btn" id="qA" ${sc.cur ? '' : 'disabled'}>${esc(b.anchor)}</button>
+          <button class="btn" id="qB" ${sc.cur ? '' : 'disabled'}>${esc(b.target)}</button>
+        </div>
+        <p class="verdict" id="qVerdict">${sc.verdict || ''}</p>
+      </div>`);
+    } else {
     P.push(`<div class="stub">
       <h3>Needs recordings</h3>
       <p>This stage plays real tokens and asks which one you heard. It needs audio that doesn't
@@ -1946,8 +2135,10 @@ function renderWalk(st){
         [b.anchor, b.target].map(sym =>
           [1,2,3].map(n => `${AUDIO.dir}${sym}-${n}${AUDIO.ext}`).join('<br>')).join('<br>')}</p>
       <p style="color:var(--faint);font-size:14px;margin-top:14px">Several tokens per sound, ideally
-      from different speakers &mdash; one voice teaches the voice, not the contrast.</p>
+      from different speakers &mdash; one voice teaches the voice, not the contrast.
+      Run <code>node fetch-audio.mjs</code> to pull them from Wikimedia Commons.</p>
     </div>`);
+    }
   }
 
   P.push(`<div class="nav">
@@ -1971,6 +2162,32 @@ function renderWalk(st){
   document.getElementById('back2').onclick = () => go({ l1: st.l1, l2: st.l2 });
   const n = document.getElementById('next'); if (n) n.onclick = hop(STAGES[i+1]);
   const p = document.getElementById('prev'); if (p) p.onclick = hop(STAGES[i-1]);
+
+  const qp = document.getElementById('qPlay');
+  if (qp){
+    const sc = earScore(st);
+    qp.onclick = () => {
+      if (!sc.cur) sc.cur = Math.random() < 0.5 ? b.anchor : b.target;
+      play(sc.cur);
+      sc.verdict = '';
+      painted = null; route();
+    };
+    const answer = pick => {
+      if (!sc.cur) return;
+      sc.asked++;
+      const ok = pick === sc.cur;
+      if (ok) sc.right++;
+      sc.verdict = ok
+        ? `<b class="ok">Right.</b> That was ${sc.cur}.`
+        : `<b class="no">No &mdash; that was ${sc.cur}.</b> Play it again, then go back and
+           redo the check for ${esc(b.kindLabel.toLowerCase())}.`;
+      sc.cur = null;
+      painted = null; route();
+    };
+    const qa = document.getElementById('qA'), qb2 = document.getElementById('qB');
+    if (qa) qa.onclick = () => answer(b.anchor);
+    if (qb2) qb2.onclick = () => answer(b.target);
+  }
 
   document.querySelectorAll('.tick[data-dim]').forEach(el => {
     el.addEventListener('click', () => {
@@ -2003,6 +2220,7 @@ function route(){
   painted = location.hash;
   const st = readHash();
   if (st.sound && st.l1.length) renderWalk(st); else renderList(st);
+  wireSpeak();          // every screen, after whatever was rendered
 }
 window.addEventListener('hashchange', route);
 if (!location.hash) go(DEFAULTS);
