@@ -132,6 +132,9 @@
   .playbtn:active{background:rgba(203,163,83,.25);}
   .playbtn:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
   .playbtn.on{background:var(--gold);color:var(--ink);border-color:var(--gold);}
+  .norec{width:42px;height:42px;display:flex;align-items:center;justify-content:center;
+    border:1px dashed var(--line);border-radius:50%;color:var(--faint);font-size:15px;
+    flex:none;opacity:.5;}
 
   .tag{display:inline-block;font-family:'Fraunces';font-size:11px;font-weight:500;
     letter-spacing:.14em;text-transform:uppercase;padding:3px 9px;border-radius:20px;
@@ -278,6 +281,11 @@
 </head>
 <body>
 <div class="wrap" id="app"></div>
+
+<!-- Optional. Written by build-audio.mjs next to the audio files. A script tag
+     is not blocked on file:// the way fetch() is, so this is how the app finds
+     out what recordings exist when the page is opened without a server. -->
+<script src="Sound%20Recordings/recordings.js" onerror="window.RECORDINGS=null"></script>
 
 <script>
 /* ==========================================================================
@@ -1470,7 +1478,7 @@ const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
    ====================================================================== */
 // Recordings for the listening stage. Several tokens per sound, ideally from
 // different speakers, so the learner trains on the contrast and not on a voice.
-const AUDIO = { dir: 'Sound Recordings/', exts: ['.ogg', '.mp3', '.wav'] };
+const AUDIO = { dir: 'Sound Recordings/', exts: ['.mp3', '.ogg', '.wav'] };
 
 /* Recordings are optional. If Sound Recordings/manifest.json is there (written
    by fetch-audio.mjs) we use it; if not we guess extensions; if nothing plays,
@@ -1488,9 +1496,9 @@ const AUDIO = { dir: 'Sound Recordings/', exts: ['.ogg', '.mp3', '.wav'] };
    manifest.json is still honoured if it happens to be reachable — it lets the
    app know exactly how many speakers each sound has, which stage 4 cares
    about — but nothing depends on it. */
-let MANIFEST = null;
+let MANIFEST = (typeof window !== 'undefined' && window.RECORDINGS) || null;
 try {
-  if (typeof fetch === 'function' && location.protocol !== 'file:'){
+  if (!MANIFEST && typeof fetch === 'function' && location.protocol !== 'file:'){
     fetch(AUDIO.dir + 'manifest.json')
       .then(r => (r && r.ok) ? r.json() : null)
       .then(m => { if (m){ MANIFEST = m; painted = null; route(); } })
@@ -1501,7 +1509,10 @@ try {
 let audioMissing = false;
 
 function clipsFor(sym){
-  if (MANIFEST && MANIFEST[sym]) return MANIFEST[sym].map(f => AUDIO.dir + f);
+  // manifest entries may be bare filenames, data: URIs (bundled build) or
+  // absolute URLs — only the first kind wants the folder prefix
+  if (MANIFEST && MANIFEST[sym])
+    return MANIFEST[sym].map(f => /^(data:|https?:)/.test(f) ? f : AUDIO.dir + f);
   const out = [];
   for (const n of [1, 2]) for (const e of AUDIO.exts) out.push(`${AUDIO.dir}${sym}-${n}${e}`);
   return out;
@@ -1821,11 +1832,12 @@ function renderList(st){
                 esc(E.LANGUAGES[c].name)).join(' and ')}</span>` : ''}
         </span>
         <span class="rowend">
-          ${haveAudio(b.anchor) || haveAudio(b.target)
+          ${haveAudio(b.anchor) && haveAudio(b.target)
             ? `<button class="playbtn" data-play="${esc(b.target)}"
                  data-also="${esc(b.anchor)}" title="Hear ${esc(b.anchor)} then ${esc(b.target)}"
                  aria-label="Hear ${esc(b.anchor)} then ${esc(b.target)}">&#9654;</button>`
-            : ''}
+            : `<span class="norec" title="no recording for ${
+                 esc(!haveAudio(b.anchor) ? b.anchor : b.target)}">&#9654;</span>`}
           <span class="chev">&rarr;</span>
         </span>
       </div>`).join(''));
