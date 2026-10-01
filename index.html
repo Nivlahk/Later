@@ -1246,8 +1246,10 @@ function curriculum(l1, l2Code, words, opts){
       const r = plan(l1Codes, l2Code, acquired);
       const b = r.bridges.find(x => x.target === p);
       if (b){
-        taught.push(b);
-        lessons.push({ type:'sound', bridge:b, forWord:w, rank:w.rank });
+        if (b.kinds.length){          // nothing to change = nothing to teach
+          taught.push(b);
+          lessons.push({ type:'sound', bridge:b, forWord:w, rank:w.rank });
+        }
       } else {
         unteachable++;
         lessons.push({ type:'sound', bridge:null, target:p, forWord:w, rank:w.rank });
@@ -1778,24 +1780,15 @@ function renderList(st){
     `<option value="${c}"${c === sel ? ' selected' : ''}>${esc(E.LANGUAGES[c].name)}</option>`).join('');
 
   const merged = Object.entries(r.collisions);
+  const shown = r.bridges.filter(b => b.kinds.length);   // drop 'no change' entries
   const P = [];
 
-  P.push(`<header>
-    <p class="kicker">Pronunciation routing</p>
-    <h1>The Bridge<em>.</em></h1>
-    <p class="lede">You don't learn a foreign sound from nothing. You learn it from a sound you
-    <b>already own</b>, by changing one thing about it. Pick two languages, then pick a sound to
-    see the two articulations side by side.</p>
-  </header>
-
-  <div class="picker" style="display:block">
+  P.push(`<div class="picker" style="display:block">
     <div class="field" style="margin-bottom:26px">
       <label>Languages you already speak &mdash; pick as many as apply</label>
       <div class="langchips">${codes.map(c =>
         `<button class="lang" data-code="${c}" aria-pressed="${st.l1.includes(c)}"
           >${esc(E.LANGUAGES[c].name)}</button>`).join('')}</div>
-      <p class="hint">Every sound from every language you pick counts as one you
-      already own, and any of them can be the starting point.</p>
     </div>
     <div class="field" style="max-width:380px">
       <label for="l2">Language you're learning</label>
@@ -1827,15 +1820,11 @@ function renderList(st){
 
   P.push(`<div class="tally">
     <div><div class="n">${r.alreadyHave.length}</div><div class="k">already owned</div></div>
-    <div><div class="n">${r.bridges.length}</div><div class="k">to build</div></div>
+    <div><div class="n">${shown.length}</div><div class="k">to build</div></div>
     <div><div class="n${merged.length ? ' warn' : ''}">${merged.length}</div>
       <div class="k">merger risks</div></div>
   </div>`);
 
-  P.push(`<h2>Sounds to build</h2>
-    <p class="sub">Every sound in ${esc(r.l2Name)} that isn't already in ${esc(r.l1Name)}, with the
-    closest thing you can already say. Easiest first. The tag says what kind of change it is; a
-    dashed tag means more than one thing changes at once. Pick one to walk through it.</p>`);
   P.push(audioMissing
     ? `<p class="audiohint">That sound has no recording yet. Put files at
        <code>Sound Recordings/&lt;symbol&gt;-1.ogg</code>, or run
@@ -1844,22 +1833,16 @@ function renderList(st){
        underlined symbol plays on its own, and clicking it again gives you another speaker
        where there is more than one.</p>`);
 
-  if (!r.bridges.length){
+  if (!shown.length){
     P.push(`<p class="sub">Nothing to build — every sound in the target is already yours.</p>`);
   } else {
-    P.push(r.bridges.map(b => `
+    P.push(shown.map(b => `
       <div class="pick" data-sound="${esc(b.target)}" role="button" tabindex="0">
         <span class="g">${ipa(b.target)}</span>
         <span>
           <span class="nm">${ipa(b.target)}<span class="tag k-${esc(b.primary)}${
             b.compound ? ' multi' : ''}">${esc(b.kindLabel)}</span>
             <small>${esc(b.targetName)}</small></span>
-          <span class="from">start from <b>${ipa(b.anchor)}</b> &nbsp;${esc(b.anchorName)}${
-            b.anchorKind === 'allophone'
-              ? ' &mdash; you already say this, just never on purpose' : ''}</span>
-          ${st.l1.length > 1 && b.anchorLangs.length
-            ? `<span class="src">from your ${b.anchorLangs.map(c =>
-                esc(E.LANGUAGES[c].name)).join(' and ')}</span>` : ''}
         </span>
         <span class="rowend">
           ${haveAudio(b.anchor) && haveAudio(b.target)
@@ -1871,20 +1854,6 @@ function renderList(st){
           <span class="chev">&rarr;</span>
         </span>
       </div>`).join(''));
-  }
-
-  if (merged.length){
-    merged.sort((a,b) => b[1].length - a[1].length);
-    P.push(`<h2>Merger risk</h2>
-      <p class="sub">These start from the same sound, so that's where they'll collapse into each
-      other. Teach them against one another, not separately.</p>`);
-    for (const [anchor, bs] of merged)
-      P.push(`<div class="merge">
-        <div class="h">from <span class="a">${ipa(anchor)}</span> &mdash; ${
-          bs.map(b => ipa(b.target)).join(' vs ')}</div>
-        <ul>${bs.map(b => `<li><b>${ipa(b.target)}</b>${
-          esc(b.steps.length ? b.steps[0].do : 'no change needed')}</li>`).join('')}</ul>
-      </div>`);
   }
 
   P.push(`<details><summary>Already owned (${r.alreadyHave.length})</summary>
@@ -1962,9 +1931,6 @@ function renderCourse(st, r, P){
         <span class="lg">${ipa(b.target)}</span>
         <span style="font-family:'Fraunces';font-size:17px">${esc(b.targetName)}</span>
         <span class="tag k-${esc(b.primary)}${b.compound ? ' multi' : ''}">${esc(b.kindLabel)}</span>
-        <div class="ld">start from <b>${ipa(b.anchor)}</b> &nbsp;${esc(b.anchorName)}${
-          b.anchorLangs.includes('acquired')
-            ? ' &mdash; which you learned earlier in this course' : ''}</div>
       </div>
       <span class="rowend">
         ${haveAudio(b.anchor) || haveAudio(b.target)
